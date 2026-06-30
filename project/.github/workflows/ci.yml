@@ -1,0 +1,122 @@
+name: CI — Pull Request Checks
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  django-tests:
+    name: Django Tests
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: testdb
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: project/django_backend/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r project/django_backend/requirements.txt
+
+      - name: Enable pgvector extension
+        run: |
+          PGPASSWORD=testpass psql -h localhost -U testuser -d testdb -c "CREATE EXTENSION IF NOT EXISTS vector;"
+
+      - name: Run migrations
+        working-directory: project/django_backend
+        env:
+          DATABASE_URL: postgres://testuser:testpass@localhost:5432/testdb
+          DJANGO_SETTINGS_MODULE: core.settings
+          SECRET_KEY: ci-secret-key-not-real
+        run: python manage.py migrate
+
+      - name: Run tests
+        working-directory: project/django_backend
+        env:
+          DATABASE_URL: postgres://testuser:testpass@localhost:5432/testdb
+          DJANGO_SETTINGS_MODULE: core.settings
+          SECRET_KEY: ci-secret-key-not-real
+        run: python manage.py test
+
+  fastapi-tests:
+    name: FastAPI Tests
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: testdb
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: project/fastapi_service/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r project/fastapi_service/requirements.txt
+
+      - name: Enable pgvector extension
+        run: |
+          PGPASSWORD=testpass psql -h localhost -U testuser -d testdb -c "CREATE EXTENSION IF NOT EXISTS vector;"
+
+      - name: Run tests
+        working-directory: project/fastapi_service
+        env:
+          VECTOR_DB_URL: postgres://testuser:testpass@localhost:5432/testdb
+          OPENAI_API_KEY: sk-fake-key-for-ci
+          ENVIRONMENT: test
+        run: pytest tests/ -v --tb=short
+
+  lint:
+    name: Lint & Format Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install linters
+        run: pip install ruff black
+
+      - name: Ruff lint
+        run: |
+          ruff check project/django_backend/
+          ruff check project/fastapi_service/
+
+      - name: Black format check
+        run: black --check project/django_backend/ project/fastapi_service/

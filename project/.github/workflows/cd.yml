@@ -1,0 +1,34 @@
+name: CD — Deploy to Render on Merge
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  wait-for-ci:
+    name: Wait for CI to pass
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for CI checks
+        uses: lewagon/wait-on-check-action@v1.3.4
+        with:
+          ref: ${{ github.sha }}
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 10
+          running-workflow-name: "Wait for CI to pass"
+
+  deploy-django:
+    name: Deploy Django to Render
+    runs-on: ubuntu-latest
+    needs: wait-for-ci
+    steps:
+      - name: Trigger Render deploy
+        run: curl -X POST "${{ secrets.RENDER_DJANGO_DEPLOY_HOOK }}"
+
+  deploy-fastapi:
+    name: Deploy FastAPI to Render
+    runs-on: ubuntu-latest
+    needs: wait-for-ci
+    steps:
+      - name: Trigger Render deploy
+        run: curl -X POST "${{ secrets.RENDER_FASTAPI_DEPLOY_HOOK }}"

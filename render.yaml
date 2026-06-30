@@ -1,0 +1,40 @@
+databases:
+  - name: ask-ai-postgres
+    plan: starter
+    databaseName: askai
+    user: askai_user
+
+services:
+  - type: web
+    name: django-backend
+    runtime: python
+    plan: starter
+    buildCommand: "pip install -r project/django_backend/requirements.txt && python project/django_backend/manage.py collectstatic --noinput"
+    startCommand: "cd project/django_backend && gunicorn core.wsgi:application --bind 0.0.0.0:$PORT"
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: ask-ai-postgres
+          property: connectionString
+      - key: DJANGO_SECRET_KEY
+        sync: false
+      - key: PYTHON_VERSION
+        value: 3.11.0
+
+  - type: web
+    name: fastapi-service
+    runtime: python
+    plan: starter
+    buildCommand: "pip install -r project/fastapi_service/requirements.txt"
+    startCommand: "cd project/fastapi_service && uvicorn main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: DJANGO_INTERNAL_URL
+        value: https://django-backend.onrender.com
+      - key: VECTOR_DB_URL
+        fromDatabase:
+          name: ask-ai-postgres
+          property: connectionString
+      - key: PYTHON_VERSION
+        value: 3.11.0
