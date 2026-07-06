@@ -1,4 +1,4 @@
-services:
-  fastapi_service:
-    volumes:
-      - ./project/storage/uploads:/app/storage/uploads
+services: # top-level Docker Compose section listing all your containers.
+  fastapi_service: #the name of this specific service/container (matches what you'd docker compose up fastapi_service).
+    volumes: #this section maps folders between your host machine (your actual laptop) and the inside of the container.
+      - ./project/storage/uploads:/app/storage/uploads # this is HOST_PATH:CONTAINER_PATH
