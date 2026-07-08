@@ -1,21 +1,21 @@
+import uuid
 from datetime import datetime
-
 from fastapi import APIRouter, UploadFile, HTTPException
-
 from schemas.document import DocumentResponse
 
-from services.storage import (
-    save_file,
-    is_allowed_file,
-)
+
+from services.storage import save_file, is_allowed_file
 from services.document_loader import load_document
 from services.chunking import chunk_text
+
+
+from services.embeddings import embed_chunks
+from services.vectorstore import upsert_chunks
 
 router = APIRouter(
     prefix="/documents",
     tags=["Documents"]
 )
-
 
 @router.post(
     "/upload",
@@ -23,14 +23,14 @@ router = APIRouter(
 )
 async def upload_file(file: UploadFile):
 
-    # Validate file type
+    
     if not is_allowed_file(file.filename):
         raise HTTPException(
             status_code=400,
             detail="Unsupported file type."
         )
 
-    # Read uploaded file
+    
     contents = await file.read()
 
     if not contents:
@@ -39,13 +39,13 @@ async def upload_file(file: UploadFile):
             detail="Uploaded file is empty."
         )
 
-    # Save file to local storage
+    # 3. Save file to local storage
     file_path = save_file(
         contents,
         file.filename
     )
 
-    # Parse document
+    # 4. Parse document
     text = load_document(file_path)
 
     if not text.strip():
@@ -54,22 +54,27 @@ async def upload_file(file: UploadFile):
             detail="No text could be extracted from the document."
         )
 
-    # Preprocess extracted text
-    text = preprocess_text(text)
+    # 5. Preprocess extracted text 
 
-    # Chunk document
+    # text = preprocess_text(text)
+
+    # 6. Chunk document
     chunks = chunk_text(
         text=text,
         chunk_size=500,
         overlap=50
     )
 
-    # Store chunks in dataset
-    build_dataset(
-        filename=file.filename,
-        chunks=chunks
-    )
+   
+    embeddings = embed_chunks(chunks)
 
+    # Create a unique tracking ID for this document [cite: 272]
+    doc_id = str(uuid.uuid4())
+
+    # Stream vectors along with structural metadata straight to Pinecone [cite: 262, 272]
+    upsert_chunks(doc_id, chunks, embeddings)
+
+    # 8. Return successful response [cite: 272]
     return DocumentResponse(
         filename=file.filename,
         path=file_path,
