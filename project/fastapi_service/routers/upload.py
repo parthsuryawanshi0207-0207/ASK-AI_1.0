@@ -54,11 +54,20 @@ async def upload_file(file: UploadFile):
             detail="No text could be extracted from the document."
         )
 
+    # Preprocess extracted text
+    text = preprocess_text(text)
+
     # Chunk document
     chunks = chunk_text(
         text=text,
         chunk_size=500,
         overlap=50
+    )
+
+    # Store chunks in dataset
+    build_dataset(
+        filename=file.filename,
+        chunks=chunks
     )
 
     return DocumentResponse(
