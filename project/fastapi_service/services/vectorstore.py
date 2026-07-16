@@ -7,26 +7,31 @@ from pinecone import Pinecone
 pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
 index = pc.Index(os.getenv("PINECONE_INDEX_NAME"))
 
-def upsert_chunks(doc_id: str, chunks: list[str], embeddings: list[list[float]]):
-    """Stores each chunk's vector along with text and structural tracking metadata."""
+def upsert_chunks(chunks: list[dict], embeddings: list[list[float]]) -> None:
+    
     vectors = []
-    for i, (chunk, emb) in enumerate(zip(chunks, embeddings)):
+    for i, (chunk, embedding) in enumerate(zip(chunks, embeddings)):
         vectors.append({
-            "id": f"{doc_id}_chunk_{i}",
-            "values": emb,
+            "id": f"{chunk['doc_id']}-{i}",
+            "values": embedding,
             "metadata": {
-                "text": chunk,       # Returns raw text string during retrieval
-                "doc_id": doc_id,    # Traces chunk back to original document
-                "chunk_index": i     # Preserves sequence context
-            }
+                "text": chunk["text"],  # Returns raw text string during retrival
+                "access_level": chunk["access_level"],  # Tells the access level of individual chunk
+                "doc_id": chunk["doc_id"],  #Traces chunk back to original document
+                "source": chunk["source"],  # Tells where the chunk came from
+            },
         })
     index.upsert(vectors=vectors)
 
-def query_similar(query_embedding: list[float], top_k: int = 5):
+def query_similar(query_embedding: list[float], user_tag: str, top_k: int = 5) -> dict:
     """Queries Pinecone using the vector to find the closest matching text chunks."""
-    results = index.query(
+
+    from services.access_control import allowed_access_levels
+    allowed_levels = allowed_access_levels(user_tag)
+
+    return index.query(
         vector=query_embedding,
         top_k=top_k,
-        include_metadata=True
+        include_metadata=True,
+        filter={"access_level": {"$in": allowed_levels}},
     )
-    return results

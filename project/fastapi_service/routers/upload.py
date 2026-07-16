@@ -6,11 +6,13 @@ from schemas.document import DocumentResponse
 
 from services.storage import save_file, is_allowed_file
 from services.document_loader import load_document
-from services.chunking import chunk_text
+from services.chunking import chunk_record
 
 
 from services.embeddings import embed_chunks
 from services.vectorstore import upsert_chunks
+from services.access_control import classify_access_level
+
 
 router = APIRouter(
     prefix="/documents",
@@ -58,21 +60,27 @@ async def upload_file(file: UploadFile):
 
     # text = preprocess_text(text)
 
-    # 6. Chunk document
-    chunks = chunk_text(
-        text=text,
-        chunk_size=500,
-        overlap=50
-    )
+    # 6. Chunk document 
 
-   
-    embeddings = embed_chunks(chunks)
-
-    # Create a unique tracking ID for this document [cite: 272]
+    # Create a unique tracking ID for this document
     doc_id = str(uuid.uuid4())
 
-    # Stream vectors along with structural metadata straight to Pinecone [cite: 262, 272]
-    upsert_chunks(doc_id, chunks, embeddings)
+    record = {
+        "text": text,
+        "doc_id": doc_id,
+        "access_level": classify_access_level(text),
+        "source": "upload"
+    }
+    chunks = chunk_record(record)
+
+    # 7. Embed and upsert
+    texts = [c["text"] for c in chunks]
+    embeddings = embed_chunks(texts)
+
+# Stream vectors along with structural metadata straight to Pinecone
+    upsert_chunks(chunks, embeddings)
+
+
 
     # 8. Return successful response [cite: 272]
     return DocumentResponse(
