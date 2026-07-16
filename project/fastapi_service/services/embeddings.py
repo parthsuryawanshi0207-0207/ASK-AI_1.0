@@ -1,0 +1,49 @@
+import os
+from dotenv import load_dotenv
+from pinecone import Pinecone
+
+load_dotenv()
+
+pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
+
+# Pinecone's own hosted embedding model — no separate Groq/OpenAI call needed.
+# multilingual-e5-large outputs 1024-dimensional vectors — this number
+# must exactly match the dimension configured in your Pinecone index.
+EMBEDDING_MODEL = "llama-text-embed-v2"
+EMBEDDING_DIMENSION = 1024
+
+
+def embed_chunks(chunks: list[str]) -> list[list[float]]:
+    """
+    Convert a list of text chunks into a list of embedding vectors.
+    input_type='passage' tells the model these are documents being
+    stored (as opposed to a search query) — e5-large uses slightly
+    different internal handling for each, which improves accuracy.
+    """
+    if not chunks:
+        return []
+
+    result = pc.inference.embed(
+        model=EMBEDDING_MODEL,
+        inputs=chunks,
+        parameters={"input_type": "passage", "truncate": "END"}
+    )
+
+    # result is a list-like object of embedding records, each with a
+    # .values field containing the actual vector
+    embeddings = [item["values"] for item in result]
+    return embeddings
+
+
+def embed_query(question: str) -> list[float]:
+    """
+    Convert a single question into one embedding vector.
+    input_type='query' — must be used at search time so the question
+    is embedded the same way queries (not documents) are expected to be.
+    """
+    result = pc.inference.embed(
+        model=EMBEDDING_MODEL,
+        inputs=[question],
+        parameters={"input_type": "query", "truncate": "END"}
+    )
+    return result[0]["values"]
