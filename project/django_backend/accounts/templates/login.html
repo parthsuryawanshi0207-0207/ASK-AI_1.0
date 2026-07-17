@@ -1,0 +1,37 @@
+{% extends "accounts/base.html" %}
+
+{% block title %}Log In{% endblock %}
+
+{% block content %}
+<h2>Log In</h2>
+<form method="post" novalidate>
+    {% csrf_token %}
+    
+    {% for field in form %}
+        <div class="form-group">
+            {{ field.label_tag }}
+            {{ field }}
+            {% if field.errors %}
+                <ul class="errorlist">
+                {% for error in field.errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+    {% endfor %}
+
+    {% if form.non_field_errors %}
+        <ul class="errorlist">
+        {% for error in form.non_field_errors %}
+            <li>{{ error }}</li>
+        {% endfor %}
+        </ul>
+    {% endif %}
+
+    <button type="submit">Log In</button>
+</form>
+<p style="text-align: center; margin-top: 1rem;">
+    Don't have an account? <a href="{% url 'accounts:register' %}">Sign up</a>
+</p>
+{% endblock %}
