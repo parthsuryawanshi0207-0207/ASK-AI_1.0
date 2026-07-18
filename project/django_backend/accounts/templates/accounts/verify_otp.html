@@ -1,0 +1,52 @@
+{% extends "accounts/base.html" %}
+{% load static %}
+
+{% block title %}Verify Email{% endblock %}
+{% block heading %}Verify Email{% endblock %}
+
+{% block extra_style %}
+<style>
+    body {
+        background: url("{% static 'KT.png' %}") center/cover no-repeat fixed !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<p style="color: #9ca3af; font-size: 0.875rem; margin-bottom: 1.5rem; line-height: 1.5;">
+    We sent a 6-digit code to <strong style="color: #e5d59c;">{{ email }}</strong>. Enter it below to verify your account.
+</p>
+
+<form method="post" novalidate>
+    {% csrf_token %}
+
+    <div class="form-group">
+        {{ form.code.label_tag }}
+        {{ form.code }}
+        {% if form.code.errors %}
+        <ul class="errorlist">
+            {% for error in form.code.errors %}
+            <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </div>
+
+    {% if form.non_field_errors %}
+    <ul class="errorlist">
+        {% for error in form.non_field_errors %}
+        <li>{{ error }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    <button type="submit">Verify Code</button>
+</form>
+
+<form method="post" action="{% url 'accounts:resend_otp' %}" style="margin-top: 0.75rem;">
+    {% csrf_token %}
+    <button type="submit" style="background-color: transparent; color: #9ca3af; border: 1px solid rgba(255,255,255,0.12); font-weight: 400; margin-top: 0;">
+        Resend Code
+    </button>
+</form>
+{% endblock %}

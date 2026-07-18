@@ -1,0 +1,24 @@
+{% extends "accounts/base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<h2>Welcome to your Dashboard</h2>
+<p style="color: #4b5563; margin-bottom: 2rem;">
+    You are logged in as <strong>{{ user.email }}</strong>.
+</p>
+
+<div style="background: #f9fafb; padding: 1rem; border-radius: 4px; border: 1px solid #e5e7eb; margin-bottom: 2rem;">
+    <p style="margin: 0;">Account Status:</p>
+    <ul style="margin-top: 0.5rem; margin-bottom: 0; padding-left: 1.5rem;">
+        <li>Active: {{ user.is_active|yesno:"Yes,No" }}</li>
+        <li>Verified: {{ user.is_verified|yesno:"Yes,No" }}</li>
+        <li>Staff: {{ user.is_staff|yesno:"Yes,No" }}</li>
+    </ul>
+</div>
+
+<form method="post" action="{% url 'accounts:logout' %}">
+    {% csrf_token %}
+    <button type="submit" style="background-color: #ef4444;">Log Out</button>
+</form>
+{% endblock %}

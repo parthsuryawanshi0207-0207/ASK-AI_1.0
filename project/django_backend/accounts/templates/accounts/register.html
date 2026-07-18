@@ -1,0 +1,50 @@
+{% extends "accounts/base.html" %}
+{% load static %}
+
+{% block title %}Register{% endblock %}
+{% block heading %}Create Account{% endblock %}
+
+{% block extra_style %}
+<style>
+    body {
+        background: url("{% static 'golden_tree.png' %}") center/cover no-repeat fixed !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<form method="post" novalidate>
+    {% csrf_token %}
+
+    {% for field in form %}
+        <div class="form-group">
+            {{ field.label_tag }}
+            {{ field }}
+            {% if field.errors %}
+                <ul class="errorlist">
+                {% for error in field.errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+                </ul>
+            {% endif %}
+            {% if field.help_text %}
+                <small style="color: #6b7280; display: block; margin-top: 0.25rem; font-size:0.78rem;">{{ field.help_text }}</small>
+            {% endif %}
+        </div>
+    {% endfor %}
+
+    {% if form.non_field_errors %}
+        <ul class="errorlist">
+        {% for error in form.non_field_errors %}
+            <li>{{ error }}</li>
+        {% endfor %}
+        </ul>
+    {% endif %}
+
+    <button type="submit">Sign Up</button>
+</form>
+
+<p class="auth-footer">
+    Already have an account? <a href="{% url 'accounts:login' %}">Log in</a>
+</p>
+{% endblock %}
