@@ -24,7 +24,7 @@ def process_new_email_task(self, user_id: str, message_id: str):
         gmail = build("gmail", "v1", credentials=creds)
         message = gmail.users().messages().get(userId="me", id=message_id, format="full").execute()
 
-        _index_email(message)
+        _index_email(message, gmail_service=gmail)
 
     except Exception as exc:
         # Transient failures (rate limit, network) get retried; the queue
@@ -43,7 +43,7 @@ def process_backfill_batch_task(self, user_id: str, message_ids: list[str]):
             message = gmail.users().messages().get(
                 userId="me", id=message_id, format="full"
             ).execute()
-            _index_email(message)
+            _index_email(message, gmail_service=gmail)
         except Exception as exc:
             # One bad message in a batch shouldn't kill the whole batch;
             # log and continue rather than retrying the entire batch task.
@@ -51,9 +51,9 @@ def process_backfill_batch_task(self, user_id: str, message_ids: list[str]):
             continue
 
 
-def _index_email(message: dict) -> None:
+def _index_email(message: dict, gmail_service=None) -> None:
     """Shared tail end: extract -> chunk -> embed -> upsert, per email."""
-    records = extract_from_email(message)
+    records = extract_from_email(message, gmail_service=gmail_service)
     for record in records:
         chunks = chunk_record(record)
         texts = [c["text"] for c in chunks]
