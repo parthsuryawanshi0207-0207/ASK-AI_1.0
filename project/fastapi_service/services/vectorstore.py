@@ -1,65 +1,37 @@
 import os
 from dotenv import load_dotenv
-from pinecone import Pinecone, ServerlessSpec
+load_dotenv()  
+from pinecone import Pinecone
 
-from services.embeddings import EMBEDDING_DIMENSION
-
-load_dotenv()
-
+# Initialize the Pinecone client
 pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
+index = pc.Index(os.getenv("PINECONE_INDEX_NAME"))
 
-INDEX_NAME = "ask-ai"
-
-if not pc.has_index(INDEX_NAME):
-    pc.create_index(
-        name=INDEX_NAME,
-        dimension=EMBEDDING_DIMENSION,
-        metric="cosine",
-        spec=ServerlessSpec(cloud="aws", region="us-east-1")
-    )
-
-index = pc.Index(INDEX_NAME)
-
-
-def upsert_chunks(doc_id: str, chunks: list[str], embeddings: list[list[float]]) -> None:
+def upsert_chunks(chunks: list[dict], embeddings: list[list[float]]) -> None:
+    
     vectors = []
     for i, (chunk, embedding) in enumerate(zip(chunks, embeddings)):
-        vector_id = f"{doc_id}_chunk_{i}"
         vectors.append({
-            "id": vector_id,
+            "id": f"{chunk['doc_id']}-{i}",
             "values": embedding,
             "metadata": {
-                "doc_id": doc_id,
-                "chunk_index": i,
-                "text": chunk
-            }
+                "text": chunk["text"],  # Returns raw text string during retrival
+                "access_level": chunk["access_level"],  # Tells the access level of individual chunk
+                "doc_id": chunk["doc_id"],  #Traces chunk back to original document
+                "source": chunk["source"],  # Tells where the chunk came from
+            },
         })
+    index.upsert(vectors=vectors)
 
-    if vectors:
-        index.upsert(vectors=vectors)
+def query_similar(query_embedding: list[float], user_tag: str, top_k: int = 5) -> dict:
+    """Queries Pinecone using the vector to find the closest matching text chunks."""
 
+    from services.access_control import allowed_access_levels
+    allowed_levels = allowed_access_levels(user_tag)
 
-def semantic_search(query_embedding: list[float], doc_id: str = None, top_k: int = 3) -> list[dict]:
-    filter_dict = {"doc_id": {"$eq": doc_id}} if doc_id else None
-
-    results = index.query(
+    return index.query(
         vector=query_embedding,
         top_k=top_k,
         include_metadata=True,
-        filter=filter_dict
+        filter={"access_level": {"$in": allowed_levels}},
     )
-
-    matches = []
-    for match in results.matches:
-        matches.append({
-            "score": match.score,
-            "doc_id": match.metadata.get("doc_id"),
-            "chunk_index": match.metadata.get("chunk_index"),
-            "text": match.metadata.get("text")
-        })
-
-    return matches
-
-
-def delete_document_vectors(doc_id: str) -> None:
-    index.delete(filter={"doc_id": {"$eq": doc_id}})

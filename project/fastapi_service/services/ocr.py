@@ -1,4 +1,6 @@
 import os
+from dotenv import load_dotenv
+load_dotenv(override=True)
 import pytesseract
 from pdf2image import convert_from_path
 from PIL import Image

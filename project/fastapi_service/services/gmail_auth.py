@@ -21,6 +21,7 @@ def build_auth_url(user_id: str, redirect_uri: str) -> str:
     flow = Flow.from_client_secrets_file(
         CLIENT_SECRETS_FILE, scopes=SCOPES, redirect_uri=redirect_uri
     )
+    flow.autogenerate_code_verifier = False
     auth_url, _ = flow.authorization_url(
         access_type="offline",  # <-- Triggers Google to issue a refresh_token
         prompt="consent",       # <-- Forces refresh_token on every login, not just the first time
@@ -37,6 +38,7 @@ def exchange_code_for_tokens(code: str, redirect_uri: str, user_id: str) -> Cred
     flow = Flow.from_client_secrets_file(
         CLIENT_SECRETS_FILE, scopes=SCOPES, redirect_uri=redirect_uri
     )
+    flow.autogenerate_code_verifier = False
     flow.fetch_token(code=code)
     creds = flow.credentials
     _persist_credentials(user_id, creds)

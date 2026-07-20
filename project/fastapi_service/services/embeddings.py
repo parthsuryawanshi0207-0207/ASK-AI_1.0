@@ -1,49 +1,29 @@
-import os
-from dotenv import load_dotenv
-from pinecone import Pinecone
-
-load_dotenv()
-
-pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
-
-# Pinecone's own hosted embedding model — no separate Groq/OpenAI call needed.
-# multilingual-e5-large outputs 1024-dimensional vectors — this number
-# must exactly match the dimension configured in your Pinecone index.
-EMBEDDING_MODEL = "llama-text-embed-v2"
-EMBEDDING_DIMENSION = 1024
+import torch
+from sentence_transformers import SentenceTransformer
 
 
-def embed_chunks(chunks: list[str]) -> list[list[float]]:
-    """
-    Convert a list of text chunks into a list of embedding vectors.
-    input_type='passage' tells the model these are documents being
-    stored (as opposed to a search query) — e5-large uses slightly
-    different internal handling for each, which improves accuracy.
-    """
-    if not chunks:
-        return []
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
-    result = pc.inference.embed(
-        model=EMBEDDING_MODEL,
-        inputs=chunks,
-        parameters={"input_type": "passage", "truncate": "END"}
+
+model = SentenceTransformer("intfloat/e5-large-v2", device=DEVICE)
+
+def embed_chunks(chunks: list[str], batch_size: int = 16) -> list[list[float]]:
+   
+    prefixed = [f"passage: {chunk}" for chunk in chunks]
+    embeddings = model.encode(
+        prefixed,
+        batch_size=batch_size,
+        normalize_embeddings=True,  # Required for cosine similarity
+        convert_to_numpy=True,
+        show_progress_bar=False
     )
+    return embeddings.tolist()
 
-    # result is a list-like object of embedding records, each with a
-    # .values field containing the actual vector
-    embeddings = [item["values"] for item in result]
-    return embeddings
-
-
-def embed_query(question: str) -> list[float]:
-    """
-    Convert a single question into one embedding vector.
-    input_type='query' — must be used at search time so the question
-    is embedded the same way queries (not documents) are expected to be.
-    """
-    result = pc.inference.embed(
-        model=EMBEDDING_MODEL,
-        inputs=[question],
-        parameters={"input_type": "query", "truncate": "END"}
+def embed_query(query: str) -> list[float]:
+   
+    embedding = model.encode(
+        f"query: {query}",
+        normalize_embeddings=True,
+        convert_to_numpy=True
     )
-    return result[0]["values"]
+    return embedding.tolist()
