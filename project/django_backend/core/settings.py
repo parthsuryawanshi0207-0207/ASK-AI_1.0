@@ -6,7 +6,7 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-dummy-key-for-local-dev')
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', os.environ.get('SECRET_KEY', 'django-insecure-dummy-key-for-local-dev'))
 
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
@@ -19,6 +19,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'anymail',
     'chat_history',
     'captcha',
     'accounts',
@@ -84,14 +85,12 @@ LOGIN_URL = 'accounts:login'
 LOGIN_REDIRECT_URL = 'accounts:chatbot'
 LOGOUT_REDIRECT_URL = 'accounts:login'
 
-# Email Config (SMTP - Gmail with App Password)
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = os.getenv('SMTP_HOST', 'smtp.gmail.com')
-EMAIL_PORT = int(os.getenv('SMTP_PORT', '587'))
-EMAIL_USE_TLS = os.getenv('SMTP_USE_TLS', 'True') == 'True'
-EMAIL_HOST_USER = os.getenv('SMTP_USER', '')        # set in .env or env var
-EMAIL_HOST_PASSWORD = os.getenv('SMTP_PASSWORD', '') # set in .env or env var (use Gmail App Password)
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+# Email Config (Resend API via django-anymail)
+EMAIL_BACKEND = 'anymail.backends.resend.EmailBackend'
+ANYMAIL = {
+    'RESEND_API_KEY': os.getenv('RESEND_API_KEY', ''),
+}
+DEFAULT_FROM_EMAIL = 'ASK-AI <onboarding@resend.dev>'
 
 # Captcha Settings
 CAPTCHA_LENGTH = 5
