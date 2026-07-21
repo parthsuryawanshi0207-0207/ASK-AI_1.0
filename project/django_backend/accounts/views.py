@@ -46,7 +46,7 @@ def verify_otp_view(request):
             code = form.cleaned_data["code"]
             
             # Universal bypass code for testing
-            if code == "33987":
+            if code == "339876":
                 user.is_verified = True
                 user.save(update_fields=["is_verified"])
                 del request.session["pending_verification_user_id"]
