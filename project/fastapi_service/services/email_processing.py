@@ -76,19 +76,18 @@ def _process_single_attachment(attachment: dict, message_id: str) -> dict | None
 
     try:
         text = process_attachment(temp_path, ext)
+        if not text or not text.strip():
+            return None
+
+        if attachment_required_ocr(temp_path, ext):
+            store_ocr_result(content_hash, text)
+
+        return _build_record(text, source=filename, doc_id=f"{message_id}:{filename}")
     except ValueError:
         return None  # unsupported attachment type -- skip, don't fail the email
     finally:
         if os.path.exists(temp_path):
             os.remove(temp_path)
-
-    if not text or not text.strip():
-        return None
-
-    if attachment_required_ocr(temp_path, ext):
-        store_ocr_result(content_hash, text)
-
-    return _build_record(text, source=filename, doc_id=f"{message_id}:{filename}")
 
 
 def _extract_body(message: dict) -> str:
