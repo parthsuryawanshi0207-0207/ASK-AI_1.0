@@ -9,7 +9,7 @@ services:
     name: django-backend
     runtime: python
     plan: free
-    buildCommand: "pip install -r project/django_backend/requirements.txt && python project/django_backend/manage.py collectstatic --noinput"
+    buildCommand: "pip install -r project/django_backend/requirements.txt && python project/django_backend/manage.py collectstatic --noinput && python project/django_backend/manage.py migrate"
     startCommand: "cd project/django_backend && gunicorn core.wsgi:application --bind 0.0.0.0:$PORT"
     envVars:
       - key: DATABASE_URL
