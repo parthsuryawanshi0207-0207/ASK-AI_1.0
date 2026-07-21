@@ -2,6 +2,10 @@ from django.contrib.auth import login as auth_login, logout as auth_logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
+from django.templatetags.static import static
+from django.http import HttpResponse
+import os
+from django.conf import settings
 
 from .forms import RegistrationForm, OTPVerificationForm, LoginForm
 from .models import User, OTP
@@ -77,7 +81,7 @@ def login_view(request):
         if form.is_valid():
             user = form.get_user()
             auth_login(request, user)
-            return redirect("accounts:dashboard")
+            return redirect("accounts:chatbot")
     else:
         form = LoginForm(request=request)
 
@@ -92,3 +96,17 @@ def logout_view(request):
 @login_required(login_url="accounts:login")
 def dashboard_view(request):
     return render(request, "accounts/dashboard.html", {"user": request.user})
+
+
+@login_required(login_url="accounts:login")
+def chatbot_view(request):
+    """Serve the built React frontend (chatbot interface)."""
+    index_path = os.path.join(settings.BASE_DIR, 'accounts', 'static', 'frontend', 'index.html')
+    with open(index_path, 'r', encoding='utf-8') as f:
+        content = f.read()
+    
+    # Inject user email into the React app
+    script = f'<script>window.USER_EMAIL = "{request.user.email}";</script>'
+    content = content.replace('</head>', f'{script}</head>')
+    
+    return HttpResponse(content, content_type='text/html')
