@@ -85,12 +85,12 @@ LOGIN_URL = 'accounts:login'
 LOGIN_REDIRECT_URL = 'accounts:chatbot'
 LOGOUT_REDIRECT_URL = 'accounts:login'
 
-# Email Config (Resend API via django-anymail)
-EMAIL_BACKEND = 'anymail.backends.resend.EmailBackend'
+# Email Config (Brevo API via django-anymail)
+EMAIL_BACKEND = 'anymail.backends.sendinblue.EmailBackend'
 ANYMAIL = {
-    'RESEND_API_KEY': os.getenv('RESEND_API_KEY', ''),
+    'SENDINBLUE_API_KEY': os.getenv('BREVO_API_KEY', ''),
 }
-DEFAULT_FROM_EMAIL = 'ASK-AI <onboarding@resend.dev>'
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'krishjainb24bb1016@gmail.com')
 
 # Captcha Settings
 CAPTCHA_LENGTH = 5
