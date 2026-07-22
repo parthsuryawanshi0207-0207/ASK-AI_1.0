@@ -52,9 +52,7 @@ class OTPVerificationForm(forms.Form):
         max_length=6,
         min_length=6,
         label="Verification code",
-        widget=forms.TextInput(
-            attrs={"autocomplete": "one-time-code", "inputmode": "numeric"}
-        ),
+        widget=forms.TextInput(attrs={"autocomplete": "one-time-code", "inputmode": "numeric"}),
     )
 
 

@@ -19,9 +19,7 @@ def build_auth_url(user_id: str, redirect_uri: str) -> str:
     Sub-Step A: Generate the Google Consent Screen URL.
     This creates the link that your React Native app will open for the user.
     """
-    flow = Flow.from_client_secrets_file(
-        CLIENT_SECRETS_FILE, scopes=SCOPES, redirect_uri=redirect_uri
-    )
+    flow = Flow.from_client_secrets_file(CLIENT_SECRETS_FILE, scopes=SCOPES, redirect_uri=redirect_uri)
     flow.autogenerate_code_verifier = False
     auth_url, _ = flow.authorization_url(
         access_type="offline",  # <-- Triggers Google to issue a refresh_token
@@ -36,9 +34,7 @@ def exchange_code_for_tokens(code: str, redirect_uri: str, user_id: str) -> Cred
     Sub-Step B: Exchange the temporary one-time auth code for long-lived tokens.
     Triggered right after the user successfully logs into Google in the browser.
     """
-    flow = Flow.from_client_secrets_file(
-        CLIENT_SECRETS_FILE, scopes=SCOPES, redirect_uri=redirect_uri
-    )
+    flow = Flow.from_client_secrets_file(CLIENT_SECRETS_FILE, scopes=SCOPES, redirect_uri=redirect_uri)
     flow.autogenerate_code_verifier = False
     flow.fetch_token(code=code)
     creds = flow.credentials
@@ -54,9 +50,7 @@ def get_valid_credentials(user_id: str) -> Credentials:
     """
     path = TOKEN_STORE_PATH.format(user_id=user_id)
     if not os.path.exists(path):
-        raise ValueError(
-            f"No stored credentials for user {user_id}; run OAuth flow first."
-        )
+        raise ValueError(f"No stored credentials for user {user_id}; run OAuth flow first.")
 
     with open(path, "r") as f:
         data = json.load(f)

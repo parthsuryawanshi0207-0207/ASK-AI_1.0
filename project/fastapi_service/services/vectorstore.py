@@ -28,9 +28,7 @@ def get_index():
     return _index
 
 
-def upsert_chunks(
-    doc_id: str, chunks: list[str], embeddings: list[list[float]]
-) -> None:
+def upsert_chunks(doc_id: str, chunks: list[str], embeddings: list[list[float]]) -> None:
     vectors = []
     for i, (chunk, embedding) in enumerate(zip(chunks, embeddings)):
         vector_id = f"{doc_id}_chunk_{i}"
@@ -46,14 +44,10 @@ def upsert_chunks(
         get_index().upsert(vectors=vectors)
 
 
-def semantic_search(
-    query_embedding: list[float], doc_id: str = None, top_k: int = 3
-) -> list[dict]:
+def semantic_search(query_embedding: list[float], doc_id: str = None, top_k: int = 3) -> list[dict]:
     filter_dict = {"doc_id": {"$eq": doc_id}} if doc_id else None
 
-    results = get_index().query(
-        vector=query_embedding, top_k=top_k, include_metadata=True, filter=filter_dict
-    )
+    results = get_index().query(vector=query_embedding, top_k=top_k, include_metadata=True, filter=filter_dict)
 
     matches = []
     for match in results.matches:

@@ -77,9 +77,7 @@ class OTP(models.Model):
     OTP_LENGTH = 6
     OTP_VALIDITY_MINUTES = 10
 
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="otps"
-    )
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="otps")
     code = models.CharField(max_length=OTP_LENGTH)
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField()

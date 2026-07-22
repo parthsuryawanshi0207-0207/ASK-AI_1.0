@@ -31,9 +31,7 @@ async def upload_file(file: UploadFile):
     text = load_document(file_path)
 
     if not text.strip():
-        raise HTTPException(
-            status_code=400, detail="No text could be extracted from the document."
-        )
+        raise HTTPException(status_code=400, detail="No text could be extracted from the document.")
 
     # 5. Preprocess extracted text
 
@@ -60,6 +58,4 @@ async def upload_file(file: UploadFile):
     upsert_chunks(chunks, embeddings)
 
     # 8. Return successful response [cite: 272]
-    return DocumentResponse(
-        filename=file.filename, path=file_path, uploaded_at=datetime.utcnow()
-    )
+    return DocumentResponse(filename=file.filename, path=file_path, uploaded_at=datetime.utcnow())

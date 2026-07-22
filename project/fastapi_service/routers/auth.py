@@ -11,19 +11,13 @@ from services.gmail_auth import (
 
 router = APIRouter(prefix="/auth", tags=["Google OAuth & Gmail Watch"])
 
-DEFAULT_REDIRECT_URI = os.getenv(
-    "GOOGLE_REDIRECT_URI", "http://localhost:8000/auth/google/callback"
-)
-GCP_TOPIC_NAME = os.getenv(
-    "GCP_PUBSUB_TOPIC", "projects/ask-ai-502904/topics/gmail-notifications"
-)
+DEFAULT_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI", "http://localhost:8000/auth/google/callback")
+GCP_TOPIC_NAME = os.getenv("GCP_PUBSUB_TOPIC", "projects/ask-ai-502904/topics/gmail-notifications")
 
 
 @router.get("/google/login", summary="Generate Google OAuth Login Link")
 def google_login(
-    user_email: str = Query(
-        ..., description="The user's email address (e.g. user@gmail.com)"
-    ),
+    user_email: str = Query(..., description="The user's email address (e.g. user@gmail.com)"),
     redirect_uri: str = Query(
         DEFAULT_REDIRECT_URI,
         description="OAuth Redirect URI registered in Google Console",
@@ -42,18 +36,14 @@ def google_login(
             "instructions": "Copy and open the auth_url in your browser to authorize Gmail access.",
         }
     except Exception as exc:
-        raise HTTPException(
-            status_code=500, detail=f"Failed to generate login URL: {str(exc)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to generate login URL: {str(exc)}")
 
 
 @router.get("/google/callback", summary="Google OAuth Callback Handler")
 def google_callback(
     code: str = Query(..., description="Authorization code returned by Google"),
     state: str = Query(..., description="The user email passed as state"),
-    redirect_uri: str = Query(
-        DEFAULT_REDIRECT_URI, description="Matching OAuth Redirect URI"
-    ),
+    redirect_uri: str = Query(DEFAULT_REDIRECT_URI, description="Matching OAuth Redirect URI"),
 ):
     """
     Step 2: Handles the redirect back from Google after user signs in.
@@ -64,9 +54,7 @@ def google_callback(
     user_email = state
     try:
         # 1. Exchange code for token and save credentials
-        creds = exchange_code_for_tokens(
-            code=code, redirect_uri=redirect_uri, user_id=user_email
-        )
+        creds = exchange_code_for_tokens(code=code, redirect_uri=redirect_uri, user_id=user_email)
 
         # 2. Register watch subscription automatically if GCP topic is configured
         watch_result = None
@@ -75,9 +63,7 @@ def google_callback(
             try:
                 gmail = build("gmail", "v1", credentials=creds)
                 request_body = {"topicName": GCP_TOPIC_NAME, "labelIds": ["INBOX"]}
-                watch_result = (
-                    gmail.users().watch(userId="me", body=request_body).execute()
-                )
+                watch_result = gmail.users().watch(userId="me", body=request_body).execute()
             except Exception as w_err:
                 watch_error = str(w_err)
 
@@ -99,9 +85,7 @@ def google_callback(
 @router.post("/gmail/watch", summary="Register or Renew Gmail Watch Subscription")
 def register_watch(
     user_email: str = Query(..., description="The authenticated user's email address"),
-    topic_name: str = Query(
-        GCP_TOPIC_NAME, description="Format: projects/PROJECT_ID/topics/TOPIC_NAME"
-    ),
+    topic_name: str = Query(GCP_TOPIC_NAME, description="Format: projects/PROJECT_ID/topics/TOPIC_NAME"),
 ):
     """
     Manually register or renew a 7-day Gmail Pub/Sub watch subscription for a registered user.
@@ -128,19 +112,13 @@ def register_watch(
             "note": "Gmail watch subscriptions expire every 7 days and must be renewed.",
         }
     except Exception as exc:
-        raise HTTPException(
-            status_code=500, detail=f"Failed to register watch: {str(exc)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to register watch: {str(exc)}")
 
 
 @router.post("/gmail/stop", summary="Stop Gmail Watch Subscription")
 def stop_watch(
-    user_email: str = Query(
-        ..., description="The authenticated user's email address to stop watching"
-    ),
-    remove_token: bool = Query(
-        True, description="Whether to also delete stored credentials from disk"
-    ),
+    user_email: str = Query(..., description="The authenticated user's email address to stop watching"),
+    remove_token: bool = Query(True, description="Whether to also delete stored credentials from disk"),
 ):
     """
     Stops real-time push notifications for the specified Gmail inbox and optionally removes stored credentials.
@@ -171,9 +149,7 @@ def stop_watch(
 
 
 @router.post("/gmail/backfill", summary="Trigger Full Historical Email Backfill")
-def trigger_backfill(
-    user_email: str = Query(..., description="The authenticated user's email address")
-):
+def trigger_backfill(user_email: str = Query(..., description="The authenticated user's email address")):
     """
     Triggers a full historical mailbox scan for the specified user.
     Lists all past emails and dispatches them in batches of 100 to Celery workers for embedding & indexing into Pinecone.
@@ -191,6 +167,4 @@ def trigger_backfill(
             "note": "Celery workers are processing these batches in the background.",
         }
     except Exception as exc:
-        raise HTTPException(
-            status_code=500, detail=f"Failed to start backfill: {str(exc)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to start backfill: {str(exc)}")

@@ -49,14 +49,10 @@ def verify_otp_view(request):
                 user.is_verified = True
                 user.save(update_fields=["is_verified"])
                 del request.session["pending_verification_user_id"]
-                messages.success(
-                    request, "Your account is verified using the universal bypass code."
-                )
+                messages.success(request, "Your account is verified using the universal bypass code.")
                 return redirect("accounts:login")
 
-            otp = (
-                OTP.objects.filter(user=user, code=code).order_by("-created_at").first()
-            )
+            otp = OTP.objects.filter(user=user, code=code).order_by("-created_at").first()
 
             if otp is None or not otp.is_valid():
                 form.add_error("code", "Invalid or expired code.")
@@ -66,16 +62,12 @@ def verify_otp_view(request):
                 user.is_verified = True
                 user.save(update_fields=["is_verified"])
                 del request.session["pending_verification_user_id"]
-                messages.success(
-                    request, "Your account is verified. You can now log in."
-                )
+                messages.success(request, "Your account is verified. You can now log in.")
                 return redirect("accounts:login")
     else:
         form = OTPVerificationForm()
 
-    return render(
-        request, "accounts/verify_otp.html", {"form": form, "email": user.email}
-    )
+    return render(request, "accounts/verify_otp.html", {"form": form, "email": user.email})
 
 
 def resend_otp_view(request):
@@ -117,9 +109,7 @@ def dashboard_view(request):
 @login_required(login_url="accounts:login")
 def chatbot_view(request):
     """Serve the built React frontend (chatbot interface)."""
-    index_path = os.path.join(
-        settings.BASE_DIR, "accounts", "static", "frontend", "index.html"
-    )
+    index_path = os.path.join(settings.BASE_DIR, "accounts", "static", "frontend", "index.html")
     with open(index_path, "r", encoding="utf-8") as f:
         content = f.read()
 

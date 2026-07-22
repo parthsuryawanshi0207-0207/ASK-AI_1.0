@@ -33,9 +33,7 @@ def ocr_pdf(pdf_path: str, dpi: int = 300) -> str:
     dpi=300 is the standard floor for OCR accuracy — below ~200-250 DPI,
     small text becomes ambiguous at the pixel level and error rates climb.
     """
-    pages = convert_from_path(
-        pdf_path, dpi=dpi, poppler_path=POPPLER_PATH  # None on Linux = uses system PATH
-    )
+    pages = convert_from_path(pdf_path, dpi=dpi, poppler_path=POPPLER_PATH)  # None on Linux = uses system PATH
 
     text_per_page = []
     for i, page in enumerate(pages):
