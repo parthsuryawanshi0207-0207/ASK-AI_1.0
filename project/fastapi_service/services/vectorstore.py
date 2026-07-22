@@ -87,7 +87,17 @@ def query_similar(query_embedding: list, user_tag: str = None, top_k: int = 5) -
         include_metadata=True,
         filter=filter_dict,
     )
-    return {"matches": results.matches}
+    
+    # Convert Pinecone ScoredVector objects to standard dicts so query.py can use match["metadata"]
+    normalized_matches = []
+    for m in results.matches:
+        normalized_matches.append({
+            "id": m.id,
+            "score": m.score,
+            "metadata": m.metadata
+        })
+        
+    return {"matches": normalized_matches}
 
 
 def semantic_search(query_embedding: list, doc_id: str = None, top_k: int = 3) -> list:
