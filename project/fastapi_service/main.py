@@ -16,6 +16,13 @@ app = FastAPI(
     version="1.0",
 )
 
+
+@app.get("/")
+def root():
+    """Health check endpoint."""
+    return {"Hello": "World"}
+
+
 # 2. Storage settings
 UPLOAD_DIR = "storage/uploads"
 ALLOWED_EXTENSIONS = {".pdf", ".docx", ".txt", ".jpg", ".jpeg", ".png", ".tiff", ".bmp"}
