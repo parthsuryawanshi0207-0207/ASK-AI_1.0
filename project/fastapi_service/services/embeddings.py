@@ -1,10 +1,22 @@
 import os
+
 from dotenv import load_dotenv
-from pinecone import Pinecone
 
 load_dotenv()
 
-pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
+# Pinecone client is initialized lazily to avoid import-time failures in CI/tests
+_pc = None
+
+
+def get_pinecone_client():
+    """Lazily initialize and return the Pinecone client."""
+    global _pc
+    if _pc is None:
+        from pinecone import Pinecone
+
+        _pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY", "fake-key-for-ci"))
+    return _pc
+
 
 # Pinecone's own hosted embedding model — no separate Groq/OpenAI call needed.
 # multilingual-e5-large outputs 1024-dimensional vectors — this number
@@ -23,6 +35,7 @@ def embed_chunks(chunks: list[str]) -> list[list[float]]:
     if not chunks:
         return []
 
+    pc = get_pinecone_client()
     result = pc.inference.embed(
         model=EMBEDDING_MODEL,
         inputs=chunks,
@@ -41,6 +54,7 @@ def embed_query(question: str) -> list[float]:
     input_type='query' — must be used at search time so the question
     is embedded the same way queries (not documents) are expected to be.
     """
+    pc = get_pinecone_client()
     result = pc.inference.embed(
         model=EMBEDDING_MODEL,
         inputs=[question],
