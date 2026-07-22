@@ -18,7 +18,7 @@ so gmail_webhook.py needs zero changes.
 """
 
 from googleapiclient.discovery import build
-from services.email_processor import process_email_message
+from services.email_processing import process_email_message
 from services.gmail_auth import get_valid_credentials
 
 
