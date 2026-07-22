@@ -1,4 +1,5 @@
 import os
+
 from dotenv import load_dotenv
 from pinecone import Pinecone, ServerlessSpec
 
@@ -6,19 +7,26 @@ from services.embeddings import EMBEDDING_DIMENSION
 
 load_dotenv()
 
-pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
+pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY", "fake-key-for-ci"))
 
 INDEX_NAME = "ask-ai"
 
-if not pc.has_index(INDEX_NAME):
-    pc.create_index(
-        name=INDEX_NAME,
-        dimension=EMBEDDING_DIMENSION,
-        metric="cosine",
-        spec=ServerlessSpec(cloud="aws", region="us-east-1"),
-    )
+_index = None
 
-index = pc.Index(INDEX_NAME)
+
+def get_index():
+    """Lazily initialize and return the Pinecone index."""
+    global _index
+    if _index is None:
+        if not pc.has_index(INDEX_NAME):
+            pc.create_index(
+                name=INDEX_NAME,
+                dimension=EMBEDDING_DIMENSION,
+                metric="cosine",
+                spec=ServerlessSpec(cloud="aws", region="us-east-1"),
+            )
+        _index = pc.Index(INDEX_NAME)
+    return _index
 
 
 def upsert_chunks(
@@ -36,7 +44,7 @@ def upsert_chunks(
         )
 
     if vectors:
-        index.upsert(vectors=vectors)
+        get_index().upsert(vectors=vectors)
 
 
 def semantic_search(
@@ -44,7 +52,7 @@ def semantic_search(
 ) -> list[dict]:
     filter_dict = {"doc_id": {"$eq": doc_id}} if doc_id else None
 
-    results = index.query(
+    results = get_index().query(
         vector=query_embedding, top_k=top_k, include_metadata=True, filter=filter_dict
     )
 
@@ -63,4 +71,4 @@ def semantic_search(
 
 
 def delete_document_vectors(doc_id: str) -> None:
-    index.delete(filter={"doc_id": {"$eq": doc_id}})
+    get_index().delete(filter={"doc_id": {"$eq": doc_id}})
