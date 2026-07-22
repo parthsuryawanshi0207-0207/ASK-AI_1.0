@@ -8,6 +8,7 @@ services:
   - type: web
     name: django-backend
     runtime: python
+    branch: madhav-dev
     plan: starter
     buildCommand: "pip install -r django_backend/requirements.txt && python django_backend/manage.py collectstatic --noinput"
     startCommand: "cd django_backend && gunicorn core.wsgi:application --bind 0.0.0.0:$PORT"
@@ -24,6 +25,7 @@ services:
   - type: web
     name: fastapi-service
     runtime: python
+    branch: madhav-dev
     plan: starter
     buildCommand: "pip install -r fastapi_service/requirements.txt"
     startCommand: "cd fastapi_service && uvicorn main:app --host 0.0.0.0 --port $PORT"
