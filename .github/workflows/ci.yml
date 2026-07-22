@@ -96,7 +96,9 @@ jobs:
         env:
           VECTOR_DB_URL: postgres://testuser:testpass@localhost:5432/testdb
           OPENAI_API_KEY: sk-fake-key-for-ci
+          PINECONE_API_KEY: fake-key-for-ci
           ENVIRONMENT: test
+          PYTHONPATH: .
         run: pytest tests/ -v --tb=short
 
   lint:

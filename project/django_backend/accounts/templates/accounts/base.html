@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Authentication{% endblock %} | ASK AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            letter-spacing: -0.01em;
+            min-height: 100vh;
+            background-color: #111;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            background-color: rgba(0, 0, 0, 0.88);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 16px;
+            padding: 2.5rem 2rem;
+            width: 100%;
+            max-width: 380px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.6);
+        }
+
+        /* --- Logo header --- */
+        .auth-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.75rem;
+        }
+
+        .auth-header h2 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #fff;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            line-height: 1.2;
+        }
+
+        .logo {
+            width: 100px;
+            height: auto;
+            object-fit: contain;
+        }
+
+        h1, h2 {
+            color: #fff;
+            font-weight: 700;
+        }
+
+        /* --- Messages --- */
+        .messages {
+            list-style: none;
+            margin-bottom: 1.25rem;
+        }
+
+        .messages li {
+            padding: 0.65rem 0.9rem;
+            margin-bottom: 0.5rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+        }
+
+        .messages .error   { background: rgba(220, 38, 38, 0.2);  border: 1px solid rgba(220,38,38,0.3);  color: #fca5a5; }
+        .messages .success { background: rgba(22, 163, 74, 0.2);  border: 1px solid rgba(22,163,74,0.3);  color: #86efac; }
+        .messages .info    { background: rgba(37, 99, 235, 0.2);  border: 1px solid rgba(37,99,235,0.3);  color: #93c5fd; }
+
+        /* --- Form --- */
+        .form-group {
+            margin-bottom: 1.1rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.4rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #b0b7c3;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="password"] {
+            width: 100%;
+            padding: 0.65rem 0.85rem;
+            background-color: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: border-color 0.2s, background-color 0.2s;
+            outline: none;
+        }
+
+        input[type="text"]:focus,
+        input[type="email"]:focus,
+        input[type="password"]:focus {
+            border-color: rgba(255, 255, 255, 0.4);
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        input::placeholder {
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* --- Errors --- */
+        .errorlist {
+            list-style: none;
+            color: #fca5a5;
+            font-size: 0.8rem;
+            margin-top: 0.35rem;
+            padding: 0;
+        }
+
+        /* --- Button --- */
+        button {
+            width: 100%;
+            background-color: #fff;
+            color: #000;
+            padding: 0.75rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            font-family: inherit;
+            cursor: pointer;
+            margin-top: 1.25rem;
+            letter-spacing: 0.2px;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+
+        button:hover {
+            background-color: #e5e7eb;
+        }
+
+        button:active {
+            transform: scale(0.99);
+        }
+
+        /* --- Captcha --- */
+        .captcha {
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        img.captcha {
+            display: block;
+            margin-bottom: 0.5rem;
+            border-radius: 6px;
+        }
+
+        /* --- Links below form --- */
+        .auth-footer {
+            text-align: center;
+            margin-top: 1.25rem;
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        .auth-footer a {
+            color: #60a5fa;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .auth-footer a:hover {
+            color: #93c5fd;
+            text-decoration: underline;
+        }
+    </style>
+    {% block extra_style %}{% endblock %}
+</head>
+<body>
+    <div class="container">
+        <!-- Logo + Page Title side by side -->
+        <div class="auth-header">
+            <h2>{% block heading %}{% endblock %}</h2>
+            <img src="{% static 'logo.jpeg' %}" alt="ASK AI Logo" class="logo">
+        </div>
+
+        {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+            <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

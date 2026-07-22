@@ -1,8 +1,12 @@
-from services.document_loader import load_document, is_scanned_pdf  # your existing pipeline, untouched
-from services.xlsx import extract_excel_text, extract_csv_text
+from services.document_loader import (  # your existing pipeline, untouched
+    is_scanned_pdf,
+    load_document,
+)
+from services.xlsx import extract_csv_text, extract_excel_text
 
 IMAGE_EXTENSIONS = {"jpg", "jpeg", "png", "tiff", "bmp"}
 SPREADSHEET_EXTENSIONS = {"xlsx", "xls"}
+
 
 def process_attachment(file_path: str, ext: str) -> str:
     """

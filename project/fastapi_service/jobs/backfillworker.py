@@ -1,11 +1,11 @@
 # jobs/backfillworker.py
 from googleapiclient.discovery import build
-
+from jobs.email_tasks import process_backfill_batch_task
 from services.gmail_auth import get_valid_credentials
 from services.rate_limiter import acquire_token
-from jobs.email_tasks import process_backfill_batch_task
 
 BATCH_SIZE = 100
+
 
 def start_backfill(user_id: str) -> int:
     """
@@ -20,11 +20,16 @@ def start_backfill(user_id: str) -> int:
 
     while True:
         acquire_token(bucket="gmail_api")
-        response = gmail.users().messages().list(
-            userId="me",
-            maxResults=BATCH_SIZE,
-            pageToken=page_token,
-        ).execute()
+        response = (
+            gmail.users()
+            .messages()
+            .list(
+                userId="me",
+                maxResults=BATCH_SIZE,
+                pageToken=page_token,
+            )
+            .execute()
+        )
 
         message_ids = [m["id"] for m in response.get("messages", [])]
         if message_ids:

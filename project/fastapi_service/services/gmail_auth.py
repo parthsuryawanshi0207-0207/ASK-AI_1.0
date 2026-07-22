@@ -1,9 +1,10 @@
 # services/gmail_auth.py
-import os
 import json
+import os
+
+from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import Flow
-from google.auth.transport.requests import Request
 
 # Define the minimum required permission scope to read emails
 SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
@@ -24,8 +25,8 @@ def build_auth_url(user_id: str, redirect_uri: str) -> str:
     flow.autogenerate_code_verifier = False
     auth_url, _ = flow.authorization_url(
         access_type="offline",  # <-- Triggers Google to issue a refresh_token
-        prompt="consent",       # <-- Forces refresh_token on every login, not just the first time
-        state=user_id,          # Pass the unique user identity securely through the flow
+        prompt="consent",  # <-- Forces refresh_token on every login, not just the first time
+        state=user_id,  # Pass the unique user identity securely through the flow
     )
     return auth_url
 
@@ -48,12 +49,14 @@ def exchange_code_for_tokens(code: str, redirect_uri: str, user_id: str) -> Cred
 def get_valid_credentials(user_id: str) -> Credentials:
     """
     Sub-Step C: Retrieve working credentials for background processing.
-    Called before any Gmail API request. Automatically and transparently 
+    Called before any Gmail API request. Automatically and transparently
     renews an expired access token using the stored refresh token.
     """
     path = TOKEN_STORE_PATH.format(user_id=user_id)
     if not os.path.exists(path):
-        raise ValueError(f"No stored credentials for user {user_id}; run OAuth flow first.")
+        raise ValueError(
+            f"No stored credentials for user {user_id}; run OAuth flow first."
+        )
 
     with open(path, "r") as f:
         data = json.load(f)

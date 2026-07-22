@@ -1,6 +1,5 @@
 import re
 
-
 RESTRICTED_KEYWORDS = [
     "mess bill",
     "backlog",
@@ -15,9 +14,7 @@ RESTRICTED_KEYWORDS = [
 ]
 
 
-ROLL_NUMBER_HINT = re.compile(
-    r"\b[A-Z]?\d{2}[\s-]?[A-Z]{2,4}[\s-]?\d{3,4}\b"
-)
+ROLL_NUMBER_HINT = re.compile(r"\b[A-Z]?\d{2}[\s-]?[A-Z]{2,4}[\s-]?\d{3,4}\b")
 
 
 def classify_access_level(text: str) -> str:
@@ -32,6 +29,7 @@ def classify_access_level(text: str) -> str:
 
     return "public"
 
+
 def resolve_user_tag(email_domain: str) -> str:
     """
     Student -> iitj.ac.in
@@ -39,11 +37,7 @@ def resolve_user_tag(email_domain: str) -> str:
     Everyone else -> Guest
     """
 
-    return (
-        "Student"
-        if email_domain.lower() == "iitj.ac.in"
-        else "Guest"
-    )
+    return "Student" if email_domain.lower() == "iitj.ac.in" else "Guest"
 
 
 def allowed_access_levels(user_tag: str) -> list[str]:

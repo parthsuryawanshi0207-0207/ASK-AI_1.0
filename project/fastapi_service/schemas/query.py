@@ -13,7 +13,6 @@ class SourceChunk(BaseModel):
     access_level: str
 
 
-
 class QueryResponse(BaseModel):
     question: str
     answer: str

@@ -3,72 +3,65 @@ import hashlib
 import os
 import tempfile
 
-from services.attachment_processor import process_attachment, attachment_required_ocr
-from services.pii import apply_pii_protection
-from services.access_control import classify_access_level
-from services.ocr_cache import get_cached_ocr_result, store_ocr_result
+from services.attachment import attachment_required_ocr, process_attachment
+from services.chunking import chunk_text
 from services.dedup import is_already_processed, mark_processed
+from services.embeddings import embed_chunks
+from services.ocr_cache import get_cached_ocr_result, store_ocr_result
+from services.vectorstore import upsert_chunks
 
 
-def extract_from_email(message: dict, gmail_service=None) -> list[dict]:
+def process_email_message(message: dict) -> dict:
     """
-    `message` is the parsed Gmail API message resource (already fetched
-    via messages.get). Returns a list of records, each shaped:
-        {"text": str, "source": str, "access_level": str, "doc_id": str}
-    ready to be handed to chunk_text() per-record by the caller.
+    Single entry point: raw Gmail message (dict, from messages.get(format='full'))
+    -> dedup -> extract body + attachments -> chunk -> embed -> upsert.
+    Reuses your EXACT existing document CRUD pipeline functions --
+    nothing in chunking.py, embeddings.py, or vectorstore.py changes.
     """
     message_id = message["id"]
+
     if is_already_processed(message_id):
-        return []
+        return {"status": "skipped_duplicate", "message_id": message_id}
 
-    records = []
+    indexed_sources = []
 
+    # --- Body ---
     body_text = _extract_body(message)
     if body_text.strip():
-        records.append(_build_record(body_text, source="body", doc_id=message_id))
+        _index_one(text=body_text, doc_id=message_id)
+        indexed_sources.append("body")
 
-    for attachment in _get_attachments(message, gmail_service=gmail_service):
-        record = _process_single_attachment(attachment, message_id)
-        if record is not None:
-            records.append(record)
+    # --- Attachments ---
+    for attachment in _get_attachments(message):
+        source = _process_single_attachment(attachment, message_id)
+        if source is not None:
+            indexed_sources.append(source)
 
     mark_processed(message_id)
-    return records
+    return {"status": "indexed", "message_id": message_id, "sources": indexed_sources}
 
 
-def _build_record(raw_text: str, source: str, doc_id: str) -> dict:
-    protected_text = apply_pii_protection(raw_text)
-    access_level = classify_access_level(protected_text)
-    return {
-        "text": protected_text,
-        "source": source,
-        "access_level": access_level,
-        "doc_id": doc_id,
-    }
+def _index_one(text: str, doc_id: str) -> None:
+    """Mirrors exactly what your upload_document() endpoint does after parsing."""
+    chunks = chunk_text(text, chunk_size=500, overlap=50)
+    embeddings = embed_chunks(chunks)
+    upsert_chunks(doc_id=doc_id, chunks=chunks, embeddings=embeddings)
 
 
-def _process_single_attachment(attachment: dict, message_id: str) -> dict | None:
+def _process_single_attachment(attachment: dict, message_id: str) -> str | None:
     filename = attachment["filename"]
     ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
-    raw_data = attachment.get("data", "")
-    if not raw_data:
-        return None
-
-    try:
-        raw_bytes = base64.urlsafe_b64decode(raw_data)
-    except Exception:
-        return None
-
-    if not raw_bytes:
-        return None
-
+    raw_bytes = base64.urlsafe_b64decode(attachment["data"])
     content_hash = hashlib.sha256(raw_bytes).hexdigest()
 
-    # Hash-based OCR cache (Section 4.1): identical attachments (e.g. the
-    # same mess-bill image sent to hundreds of students) are extracted once.
+    # doc_id per attachment -- keeps it separately addressable/deletable
+    # in Pinecone, same pattern your delete_document_vectors() already uses
+    doc_id = f"{message_id}__{filename}"
+
     cached_text = get_cached_ocr_result(content_hash)
     if cached_text is not None:
-        return _build_record(cached_text, source=filename, doc_id=f"{message_id}:{filename}")
+        _index_one(text=cached_text, doc_id=doc_id)
+        return f"{filename} (cached)"
 
     with tempfile.NamedTemporaryFile(suffix=f".{ext}", delete=False) as tmp:
         tmp.write(raw_bytes)
@@ -76,58 +69,43 @@ def _process_single_attachment(attachment: dict, message_id: str) -> dict | None
 
     try:
         text = process_attachment(temp_path, ext)
-        if not text or not text.strip():
-            return None
-
-        if attachment_required_ocr(temp_path, ext):
-            store_ocr_result(content_hash, text)
-
-        return _build_record(text, source=filename, doc_id=f"{message_id}:{filename}")
     except ValueError:
-        return None  # unsupported attachment type -- skip, don't fail the email
+        return None  # unsupported type -- skip this attachment only
     finally:
-        if os.path.exists(temp_path):
-            os.remove(temp_path)
+        os.remove(temp_path)
+
+    if not text.strip():
+        return None  # OCR/extraction returned nothing usable
+
+    if attachment_required_ocr(temp_path, ext):
+        store_ocr_result(content_hash, text)
+
+    _index_one(text=text, doc_id=doc_id)
+    return filename
 
 
 def _extract_body(message: dict) -> str:
-    """Pulls plain-text body from Gmail's nested MIME payload structure."""
     payload = message.get("payload", {})
     parts = payload.get("parts", [payload])
     for part in parts:
         if part.get("mimeType") == "text/plain":
             data = part.get("body", {}).get("data", "")
-            if data:
-                return base64.urlsafe_b64decode(data).decode("utf-8", errors="ignore")
+            return base64.urlsafe_b64decode(data).decode("utf-8", errors="ignore")
     return ""
 
 
-def _get_attachments(message: dict, gmail_service=None) -> list[dict]:
-    """Returns [{filename, data}] for every attachment part in the message."""
+def _get_attachments(message: dict) -> list[dict]:
     attachments = []
     payload = message.get("payload", {})
-    message_id = message.get("id")
-
-    parts = payload.get("parts", [])
-    for part in parts:
+    for part in payload.get("parts", []):
         filename = part.get("filename")
         body = part.get("body", {})
-        attachment_id = body.get("attachmentId")
-
-        if filename and (attachment_id or body.get("data")):
-            data = body.get("data", "")
-
-            # If payload didn't include inline data, fetch attachment bytes via Gmail API
-            if not data and attachment_id and gmail_service and message_id:
-                try:
-                    att_res = gmail_service.users().messages().attachments().get(
-                        userId="me", messageId=message_id, id=attachment_id
-                    ).execute()
-                    data = att_res.get("data", "")
-                except Exception as exc:
-                    print(f"Failed to fetch attachment {filename} (id={attachment_id}): {exc}")
-
-            if data:
-                attachments.append({"filename": filename, "data": data})
-
+        if filename and body.get("attachmentId"):
+            attachments.append(
+                {
+                    "filename": filename,
+                    "data": body.get("data", ""),
+                    "attachmentId": body.get("attachmentId"),
+                }
+            )
     return attachments

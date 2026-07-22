@@ -1,6 +1,6 @@
 databases:
   - name: ask-ai-postgres
-    plan: starter
+    plan: free
     databaseName: askai
     user: askai_user
 
@@ -8,8 +8,8 @@ services:
   - type: web
     name: django-backend
     runtime: python
-    plan: starter
-    buildCommand: "pip install -r project/django_backend/requirements.txt && python project/django_backend/manage.py collectstatic --noinput"
+    plan: free
+    buildCommand: "pip install -r project/django_backend/requirements.txt && python project/django_backend/manage.py collectstatic --noinput && python project/django_backend/manage.py migrate"
     startCommand: "cd project/django_backend && gunicorn core.wsgi:application --bind 0.0.0.0:$PORT"
     envVars:
       - key: DATABASE_URL
@@ -24,7 +24,7 @@ services:
   - type: web
     name: fastapi-service
     runtime: python
-    plan: starter
+    plan: free
     buildCommand: "pip install -r project/fastapi_service/requirements.txt"
     startCommand: "cd project/fastapi_service && uvicorn main:app --host 0.0.0.0 --port $PORT"
     envVars:

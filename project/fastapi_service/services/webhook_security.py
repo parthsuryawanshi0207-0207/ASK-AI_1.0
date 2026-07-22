@@ -8,8 +8,8 @@ first in routers/gmail_webhook.py -- reject fast, before spending any
 real work on an untrusted request.
 """
 
-import hmac
 import hashlib
+import hmac
 import os
 
 WEBHOOK_SECRET = os.getenv("GMAIL_WEBHOOK_SECRET")

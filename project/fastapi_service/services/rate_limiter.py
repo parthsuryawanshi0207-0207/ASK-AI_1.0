@@ -1,13 +1,12 @@
-
-import time
 import threading
+import time
 
 _buckets: dict[str, dict] = {}
 _lock = threading.Lock()
 
 
-DEFAULT_CAPACITY = 20      # max tokens held at once
-DEFAULT_REFILL_RATE = 5    # tokens added per second
+DEFAULT_CAPACITY = 20  # max tokens held at once
+DEFAULT_REFILL_RATE = 5  # tokens added per second
 
 
 def _get_bucket(bucket: str) -> dict:
@@ -19,9 +18,11 @@ def _get_bucket(bucket: str) -> dict:
     return _buckets[bucket]
 
 
-
-def acquire_token(bucket: str, capacity: int = DEFAULT_CAPACITY,
-                   refill_rate: float = DEFAULT_REFILL_RATE) -> None:
+def acquire_token(
+    bucket: str,
+    capacity: int = DEFAULT_CAPACITY,
+    refill_rate: float = DEFAULT_REFILL_RATE,
+) -> None:
     """Blocks (briefly) until a token is available for the given bucket."""
     while True:
         with _lock:

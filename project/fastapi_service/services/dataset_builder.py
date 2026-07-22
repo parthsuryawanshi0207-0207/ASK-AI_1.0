@@ -20,7 +20,7 @@ def build_dataset(filename: str, chunks: list[str]) -> None:
                 "chunk_id": str(uuid.uuid4()),
                 "document": filename,
                 "chunk_index": index,
-                "text": chunk
+                "text": chunk,
             }
         )
 

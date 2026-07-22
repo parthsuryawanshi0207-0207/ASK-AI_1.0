@@ -3,13 +3,10 @@ import hmac
 import os
 import re
 
-
 PII_HASH_SALT = os.getenv("PII_HASH_SALT")
 
 
-ROLL_NUMBER_PATTERN = re.compile(
-    r"\b[A-Z]?\d{2}[\s-]?[A-Z]{2,4}[\s-]?\d{3,4}\b"
-)
+ROLL_NUMBER_PATTERN = re.compile(r"\b[A-Z]?\d{2}[\s-]?[A-Z]{2,4}[\s-]?\d{3,4}\b")
 
 GRADE_PATTERN = re.compile(
     r"\bGrade[:\s]+([A-F][+-]?)\b",
@@ -20,9 +17,7 @@ GRADE_PATTERN = re.compile(
 def _salted_hash(value: str) -> str:
 
     if not PII_HASH_SALT:
-        raise RuntimeError(
-            "PII_HASH_SALT is not configured"
-        )
+        raise RuntimeError("PII_HASH_SALT is not configured")
 
     return hmac.new(
         key=PII_HASH_SALT.encode(),
@@ -36,11 +31,7 @@ def hash_identifier(value: str) -> str:
     Used by tests.
     """
 
-    normalized = (
-        value.upper()
-        .replace(" ", "")
-        .replace("-", "")
-    )
+    normalized = value.upper().replace(" ", "").replace("-", "")
 
     return _salted_hash(normalized)
 
@@ -49,12 +40,7 @@ def hash_roll_numbers(text: str) -> str:
 
     def replace(match: re.Match):
 
-        raw = (
-            match.group(0)
-            .upper()
-            .replace(" ", "")
-            .replace("-", "")
-        )
+        raw = match.group(0).upper().replace(" ", "").replace("-", "")
 
         return f"[ROLL:{_salted_hash(raw)}]"
 
@@ -70,9 +56,7 @@ def hash_grades(text: str) -> str:
 
         grade = match.group(1).upper()
 
-        return (
-            f"Grade: [GRADE:{_salted_hash(grade)}]"
-        )
+        return f"Grade: [GRADE:{_salted_hash(grade)}]"
 
     return GRADE_PATTERN.sub(
         replace,
