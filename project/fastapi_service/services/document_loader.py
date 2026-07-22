@@ -12,6 +12,7 @@ SUPPORTED_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".tiff", ".bmp"}
 # Individual parsers — one per file type
 # ---------------------------------------------------------
 
+
 def load_pdf(file_path: str) -> str:
     """Extract text from a PDF, page by page, and join it into one string."""
     reader = PdfReader(file_path)
@@ -38,6 +39,7 @@ def load_txt(file_path: str) -> str:
 # Scanned-PDF detection
 # ---------------------------------------------------------
 
+
 def is_scanned_pdf(pdf_path: str, min_chars_per_page: int = 20) -> bool:
     """
     Heuristic: if every page has almost no extractable text,
@@ -54,6 +56,7 @@ def is_scanned_pdf(pdf_path: str, min_chars_per_page: int = 20) -> bool:
 # ---------------------------------------------------------
 # Dispatcher — routes to the correct parser based on extension
 # ---------------------------------------------------------
+
 
 def load_document(file_path: str) -> str:
     """

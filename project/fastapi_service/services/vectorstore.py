@@ -15,48 +15,49 @@ if not pc.has_index(INDEX_NAME):
         name=INDEX_NAME,
         dimension=EMBEDDING_DIMENSION,
         metric="cosine",
-        spec=ServerlessSpec(cloud="aws", region="us-east-1")
+        spec=ServerlessSpec(cloud="aws", region="us-east-1"),
     )
 
 index = pc.Index(INDEX_NAME)
 
 
-def upsert_chunks(doc_id: str, chunks: list[str], embeddings: list[list[float]]) -> None:
+def upsert_chunks(
+    doc_id: str, chunks: list[str], embeddings: list[list[float]]
+) -> None:
     vectors = []
     for i, (chunk, embedding) in enumerate(zip(chunks, embeddings)):
         vector_id = f"{doc_id}_chunk_{i}"
-        vectors.append({
-            "id": vector_id,
-            "values": embedding,
-            "metadata": {
-                "doc_id": doc_id,
-                "chunk_index": i,
-                "text": chunk
+        vectors.append(
+            {
+                "id": vector_id,
+                "values": embedding,
+                "metadata": {"doc_id": doc_id, "chunk_index": i, "text": chunk},
             }
-        })
+        )
 
     if vectors:
         index.upsert(vectors=vectors)
 
 
-def semantic_search(query_embedding: list[float], doc_id: str = None, top_k: int = 3) -> list[dict]:
+def semantic_search(
+    query_embedding: list[float], doc_id: str = None, top_k: int = 3
+) -> list[dict]:
     filter_dict = {"doc_id": {"$eq": doc_id}} if doc_id else None
 
     results = index.query(
-        vector=query_embedding,
-        top_k=top_k,
-        include_metadata=True,
-        filter=filter_dict
+        vector=query_embedding, top_k=top_k, include_metadata=True, filter=filter_dict
     )
 
     matches = []
     for match in results.matches:
-        matches.append({
-            "score": match.score,
-            "doc_id": match.metadata.get("doc_id"),
-            "chunk_index": match.metadata.get("chunk_index"),
-            "text": match.metadata.get("text")
-        })
+        matches.append(
+            {
+                "score": match.score,
+                "doc_id": match.metadata.get("doc_id"),
+                "chunk_index": match.metadata.get("chunk_index"),
+                "text": match.metadata.get("text"),
+            }
+        )
 
     return matches
 

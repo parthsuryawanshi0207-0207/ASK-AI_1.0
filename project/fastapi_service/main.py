@@ -13,7 +13,7 @@ from services.vectorstore import upsert_chunks, semantic_search, delete_document
 app = FastAPI(
     title="ASK-AI Document CRUD",
     description="A complete CRUD API for uploading, retrieving, updating and deleting documents.",
-    version="1.0"
+    version="1.0",
 )
 
 # 2. Storage settings
@@ -29,6 +29,7 @@ fake_db = {}
 # ============================================================
 # CRUD OPERATIONS
 # ============================================================
+
 
 # --- CREATE (Upload) ---
 @app.post("/documents/upload", status_code=201, tags=["Documents"])
@@ -61,7 +62,7 @@ async def upload_document(file: UploadFile = File(...)):
         os.remove(save_path)
         raise HTTPException(
             status_code=422,
-            detail="No text could be extracted or OCR'd from this file."
+            detail="No text could be extracted or OCR'd from this file.",
         )
 
     # --- Stage 3: Chunking ---
@@ -79,7 +80,7 @@ async def upload_document(file: UploadFile = File(...)):
         "uploaded_at": datetime.now().isoformat(),
         "text": parsed_text,
         "chunks": chunks,
-        "chunk_count": len(chunks)
+        "chunk_count": len(chunks),
     }
 
     return fake_db[doc_id]
@@ -119,7 +120,7 @@ def get_document_chunks(doc_id: str):
     return {
         "id": doc_id,
         "chunk_count": fake_db[doc_id]["chunk_count"],
-        "chunks": fake_db[doc_id]["chunks"]
+        "chunks": fake_db[doc_id]["chunks"],
     }
 
 
@@ -156,10 +157,7 @@ def semantic_ask_document(doc_id: str, question: str, top_k: int = 3):
     query_embedding = embed_query(question)
     results = semantic_search(query_embedding, doc_id=doc_id, top_k=top_k)
 
-    return {
-        "question": question,
-        "results": results
-    }
+    return {"question": question, "results": results}
 
 
 # --- UPDATE (Replace file) ---
@@ -193,7 +191,7 @@ async def update_document(doc_id: str, file: UploadFile = File(...)):
         os.remove(save_path)
         raise HTTPException(
             status_code=422,
-            detail="No text could be extracted or OCR'd from this file."
+            detail="No text could be extracted or OCR'd from this file.",
         )
 
     chunks = chunk_text(parsed_text, chunk_size=500, overlap=50)
@@ -211,7 +209,7 @@ async def update_document(doc_id: str, file: UploadFile = File(...)):
         "uploaded_at": datetime.now().isoformat(),
         "text": parsed_text,
         "chunks": chunks,
-        "chunk_count": len(chunks)
+        "chunk_count": len(chunks),
     }
     return fake_db[doc_id]
 

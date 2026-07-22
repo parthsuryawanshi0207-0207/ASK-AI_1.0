@@ -11,15 +11,28 @@ class UserAdmin(BaseUserAdmin):
     search_fields = ["email"]
     fieldsets = (
         (None, {"fields": ("email", "password")}),
-        ("Status", {"fields": ("is_verified", "is_active", "is_staff", "is_superuser")}),
+        (
+            "Status",
+            {"fields": ("is_verified", "is_active", "is_staff", "is_superuser")},
+        ),
         ("Permissions", {"fields": ("groups", "user_permissions")}),
         ("Important dates", {"fields": ("last_login", "date_joined")}),
     )
     add_fieldsets = (
-        (None, {
-            "classes": ("wide",),
-            "fields": ("email", "password1", "password2", "is_verified", "is_staff", "is_active"),
-        }),
+        (
+            None,
+            {
+                "classes": ("wide",),
+                "fields": (
+                    "email",
+                    "password1",
+                    "password2",
+                    "is_verified",
+                    "is_staff",
+                    "is_active",
+                ),
+            },
+        ),
     )
 
 

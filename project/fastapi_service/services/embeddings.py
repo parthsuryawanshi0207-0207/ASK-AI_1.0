@@ -26,7 +26,7 @@ def embed_chunks(chunks: list[str]) -> list[list[float]]:
     result = pc.inference.embed(
         model=EMBEDDING_MODEL,
         inputs=chunks,
-        parameters={"input_type": "passage", "truncate": "END"}
+        parameters={"input_type": "passage", "truncate": "END"},
     )
 
     # result is a list-like object of embedding records, each with a
@@ -44,6 +44,6 @@ def embed_query(question: str) -> list[float]:
     result = pc.inference.embed(
         model=EMBEDDING_MODEL,
         inputs=[question],
-        parameters={"input_type": "query", "truncate": "END"}
+        parameters={"input_type": "query", "truncate": "END"},
     )
     return result[0]["values"]

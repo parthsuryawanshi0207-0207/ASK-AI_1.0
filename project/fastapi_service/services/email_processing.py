@@ -101,9 +101,11 @@ def _get_attachments(message: dict) -> list[dict]:
         filename = part.get("filename")
         body = part.get("body", {})
         if filename and body.get("attachmentId"):
-            attachments.append({
-                "filename": filename,
-                "data": body.get("data", ""),
-                "attachmentId": body.get("attachmentId"),
-            })
+            attachments.append(
+                {
+                    "filename": filename,
+                    "data": body.get("data", ""),
+                    "attachmentId": body.get("attachmentId"),
+                }
+            )
     return attachments

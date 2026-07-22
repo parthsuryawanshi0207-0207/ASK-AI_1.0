@@ -25,6 +25,6 @@ def chunk_text(text: str, chunk_size: int = 500, overlap: int = 50) -> list[str]
         chunks.append(chunk)
 
         # Move start forward, but step back by 'overlap' to preserve context
-        start += (chunk_size - overlap)
+        start += chunk_size - overlap
 
     return chunks

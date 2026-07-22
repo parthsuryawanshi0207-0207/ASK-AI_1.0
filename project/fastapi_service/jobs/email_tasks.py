@@ -28,9 +28,12 @@ class _RealTask:
         try:
             creds = get_valid_credentials(user_id)
             gmail = build("gmail", "v1", credentials=creds)
-            message = gmail.users().messages().get(
-                userId="me", id=message_id, format="full"
-            ).execute()
+            message = (
+                gmail.users()
+                .messages()
+                .get(userId="me", id=message_id, format="full")
+                .execute()
+            )
 
             result = process_email_message(message)
             print(f"Webhook-triggered processing complete: {result}")
