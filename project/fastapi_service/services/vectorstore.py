@@ -79,7 +79,12 @@ def query_similar(query_embedding: list, user_tag: str = None, top_k: int = 5) -
     """
     filter_dict = None
     if user_tag:
-        filter_dict = {"access_level": {"$in": [user_tag, "general"]}}
+        from services.access_control import allowed_access_levels
+        allowed_levels = allowed_access_levels(user_tag)
+        # Always include "general" for email backfill chunks
+        if "general" not in allowed_levels:
+            allowed_levels.append("general")
+        filter_dict = {"access_level": {"$in": allowed_levels}}
 
     results = get_index().query(
         vector=query_embedding,
