@@ -113,8 +113,11 @@ def chatbot_view(request):
     with open(index_path, "r", encoding="utf-8") as f:
         content = f.read()
 
-    # Inject user email into the React app
-    script = f'<script>window.USER_EMAIL = "{request.user.email}";</script>'
+    # Inject user email and API config into the React app
+    fastapi_url = os.environ.get("FASTAPI_SERVICE_URL", "http://localhost:8000")
+    demo_mode = os.environ.get("DEMO_MODE", "false").lower() == "true"
+    demo_mode_str = "true" if demo_mode else "false"
+    script = f'<script>window.USER_EMAIL = "{request.user.email}"; window.FASTAPI_SERVICE_URL = "{fastapi_url}"; window.DEMO_MODE = {demo_mode_str};</script>'
     content = content.replace("</head>", f"{script}</head>")
 
     return HttpResponse(content, content_type="text/html")

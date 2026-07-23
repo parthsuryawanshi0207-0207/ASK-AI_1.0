@@ -20,6 +20,10 @@ services:
         sync: false
       - key: PYTHON_VERSION
         value: 3.11.0
+      - key: FASTAPI_SERVICE_URL
+        value: https://fastapi-service.onrender.com
+      - key: DEMO_MODE
+        value: "false"
 
   - type: web
     name: fastapi-service
