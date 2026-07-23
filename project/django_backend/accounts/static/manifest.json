@@ -1,0 +1,21 @@
+{
+  "name": "ASK AI",
+  "short_name": "ASK AI",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#111111",
+  "theme_color": "#111111",
+  "description": "ASK AI Application",
+  "icons": [
+    {
+      "src": "/static/image.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/static/image.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
