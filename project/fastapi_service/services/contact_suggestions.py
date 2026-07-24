@@ -130,21 +130,21 @@ def build_fallback_message(question: str) -> str:
     """
     Builds a helpful fallback message with contact suggestions when
     the AI cannot find the answer in documents.
+    Plain text only - no markdown, no emojis.
     """
     suggestions = get_suggestions(question)
 
     base = "I could not find the answer in the provided documents."
 
     if not suggestions:
-        # No strong keyword match — give a generic pointer
         return (
             base
-            + "\n\nFor further assistance, you may contact the **Student Gymkhana**"
-            + " at president_ss@iitj.ac.in or reach out to the relevant committee."
+            + "\n\nFor further assistance, you may contact the Student Gymkhana at president_ss@iitj.ac.in"
         )
 
-    lines = [base, "\n📬 **You may contact the following for further assistance:**\n"]
+    lines = [base, "\nYou may contact the following for further assistance:\n"]
     for s in suggestions:
-        lines.append(f"- **{s['name']}** → [{s['email']}](mailto:{s['email']})")
+        lines.append(f"  {s['name']}")
+        lines.append(f"  {s['email']}\n")
 
     return "\n".join(lines)
