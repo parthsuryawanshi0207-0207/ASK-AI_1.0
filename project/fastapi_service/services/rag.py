@@ -3,6 +3,8 @@ import os
 from dotenv import load_dotenv
 from groq import Groq
 
+from services.contact_suggestions import build_fallback_message
+
 load_dotenv()
 
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
@@ -47,7 +49,7 @@ def build_prompt(question: str, context_chunks: list[dict]) -> str:
 def generate_answer(question: str, context_chunks: list[dict]) -> str:
 
     if not context_chunks:
-        return "I could not find the answer " "in the provided documents."
+        return build_fallback_message(question)
 
     prompt = build_prompt(question, context_chunks)
 
@@ -60,4 +62,11 @@ def generate_answer(question: str, context_chunks: list[dict]) -> str:
         temperature=0,
     )
 
-    return response.choices[0].message.content
+    answer = response.choices[0].message.content
+
+    # If the LLM itself said it couldn't find the answer, enrich with contact suggestions
+    NOT_FOUND_PHRASE = "i could not find the answer"
+    if NOT_FOUND_PHRASE in answer.lower():
+        answer = build_fallback_message(question)
+
+    return answer
