@@ -15,12 +15,9 @@ GRADE_PATTERN = re.compile(
 
 
 def _salted_hash(value: str) -> str:
-
-    if not PII_HASH_SALT:
-        raise RuntimeError("PII_HASH_SALT is not configured")
-
+    salt = PII_HASH_SALT or "default_ask_ai_pii_salt_2026"
     return hmac.new(
-        key=PII_HASH_SALT.encode(),
+        key=salt.encode(),
         msg=value.encode(),
         digestmod=hashlib.sha256,
     ).hexdigest()[:16]

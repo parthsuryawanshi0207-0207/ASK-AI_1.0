@@ -5,10 +5,13 @@ STORE_PATH = os.getenv("DEDUP_STORE_PATH", "processed_message_ids.json")
 
 
 def _load() -> set:
-    if not os.path.exists(STORE_PATH):
+    if not os.path.exists(STORE_PATH) or os.path.getsize(STORE_PATH) == 0:
         return set()
-    with open(STORE_PATH) as f:
-        return set(json.load(f))
+    try:
+        with open(STORE_PATH) as f:
+            return set(json.load(f))
+    except json.JSONDecodeError:
+        return set()
 
 
 def _save(ids: set) -> None:

@@ -31,45 +31,35 @@ def get_index():
     return _index
 
 
-def upsert_chunks(chunks: list, embeddings: list, doc_id: str = None) -> None:
-    """
-    Upsert chunks into Pinecone.
-
-    Accepts two calling conventions:
-      1. upload router: upsert_chunks(chunks_of_dicts, embeddings)
-         where each chunk is a dict with keys: text, doc_id, access_level, source
-      2. email processing: upsert_chunks(doc_id=..., chunks=list[str], embeddings=...)
-    """
+def upsert_chunks(chunks: list[dict], embeddings: list[list[float]]) -> None:
     vectors = []
     for i, (chunk, embedding) in enumerate(zip(chunks, embeddings)):
-        if isinstance(chunk, dict):
-            # Called from upload.py — chunk is already a rich dict
-            chunk_doc_id = chunk.get("doc_id", doc_id or f"doc_{i}")
-            vector_id = f"{chunk_doc_id}_chunk_{i}"
-            metadata = {
-                "doc_id": chunk_doc_id,
-                "chunk_index": i,
-                "text": chunk.get("text", ""),
-                "access_level": chunk.get("access_level", "general"),
-                "source": chunk.get("source", "upload"),
-            }
+        source_type = chunk.get("source_type", "unknown")
+        metadata = {
+            "text": chunk["text"],
+            "access_level": chunk["access_level"],
+            "doc_id": chunk["doc_id"],
+            "source": chunk["source"],
+            "source_type": source_type,
+        }
+
+        if source_type == "email":
+            metadata["sender"] = chunk.get("sender", "")
+            metadata["subject"] = chunk.get("subject", "")
+            metadata["date"] = chunk.get("date", "")
+            metadata["filename"] = chunk.get("filename", "")
         else:
-            # Called from email_processing.py — chunk is a plain string
-            chunk_doc_id = doc_id or f"doc_{i}"
-            vector_id = f"{chunk_doc_id}_chunk_{i}"
-            metadata = {
-                "doc_id": chunk_doc_id,
-                "chunk_index": i,
-                "text": chunk,
-                "access_level": "general",
-                "source": "email",
-            }
+            metadata["filename"] = chunk.get("filename", "")
+            if "uploaded_at" in chunk:
+                metadata["uploaded_at"] = chunk["uploaded_at"]
 
-        vectors.append({"id": vector_id, "values": embedding, "metadata": metadata})
-
+        vectors.append({
+            "id": f"{chunk['doc_id']}-{i}",
+            "values": embedding,
+            "metadata": metadata,
+        })
     if vectors:
         get_index().upsert(vectors=vectors)
-
 
 def query_similar(query_embedding: list, user_tag: str = None, top_k: int = 5) -> dict:
     """
@@ -79,6 +69,7 @@ def query_similar(query_embedding: list, user_tag: str = None, top_k: int = 5) -
     """
     filter_dict = None
     if user_tag:
+        # pyrefly: ignore [missing-import]
         from services.access_control import allowed_access_levels
         allowed_levels = allowed_access_levels(user_tag)
         # Always include "general" for email backfill chunks

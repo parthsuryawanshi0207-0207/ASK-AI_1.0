@@ -46,7 +46,10 @@ async def upload_file(file: UploadFile):
         "text": text,
         "doc_id": doc_id,
         "access_level": classify_access_level(text),
-        "source": "upload",
+        "source_type": "document_upload",
+        "source": file.filename,
+        "filename": file.filename,
+        "uploaded_at": datetime.utcnow().isoformat(),
     }
     chunks = chunk_record(record)
 

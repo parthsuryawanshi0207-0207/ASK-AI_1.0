@@ -5,7 +5,19 @@ UPLOAD_DIR = os.getenv("UPLOAD_DIR", "../storage/uploads")
 
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-ALLOWED_EXTENSIONS = {".pdf", ".docx", ".txt"}
+ALLOWED_EXTENSIONS = {
+    ".pdf",
+    ".docx",
+    ".txt",
+    ".xlsx",
+    ".xls",
+    ".csv",
+    ".jpg",
+    ".jpeg",
+    ".png",
+    ".tiff",
+    ".bmp",
+}
 
 
 def is_allowed_file(filename: str) -> bool:

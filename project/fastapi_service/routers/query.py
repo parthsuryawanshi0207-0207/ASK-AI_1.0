@@ -14,7 +14,7 @@ async def ask_question(request: QueryRequest):
     user_tag = resolve_user_tag(domain)
 
     query_embedding = embed_query(request.question)
-    results = query_similar(query_embedding, user_tag=user_tag, top_k=5)
+    results = query_similar(query_embedding, user_tag=user_tag, top_k=10)
 
     matches = results["matches"]
     context_chunks = [
@@ -23,6 +23,10 @@ async def ask_question(request: QueryRequest):
             "score": match["score"],
             "doc_id": match["metadata"]["doc_id"],
             "access_level": match["metadata"]["access_level"],
+            "sender": match["metadata"].get("sender", ""),
+            "subject": match["metadata"].get("subject", ""),
+            "date": match["metadata"].get("date", ""),
+            "source_type": match["metadata"].get("source_type", "unknown"),
         }
         for match in matches
     ]
@@ -35,6 +39,11 @@ async def ask_question(request: QueryRequest):
             score=match["score"],
             doc_id=match["metadata"]["doc_id"],
             access_level=match["metadata"]["access_level"],
+            sender=match["metadata"].get("sender"),
+            subject=match["metadata"].get("subject"),
+            date=match["metadata"].get("date"),
+            source=match["metadata"].get("source"),
+            source_type=match["metadata"].get("source_type"),
         )
         for match in matches
     ]

@@ -35,14 +35,17 @@ Do not make up information.
 
 
 def build_prompt(question: str, context_chunks: list[dict]) -> str:
-
     context = ""
-
     for i, chunk in enumerate(context_chunks, start=1):
-        context += f"Source {i}\n" f"{chunk['text']}\n\n"
+        header_info = ""
+        sender = chunk.get("sender")
+        subject = chunk.get("subject")
+        date = chunk.get("date")
+        if sender or subject or date:
+            header_info = f"[From: {sender or 'Unknown'} | Subject: {subject or 'No Subject'} | Date: {date or 'N/A'}]\n"
+        context += f"Source {i}:\n{header_info}{chunk['text']}\n\n"
 
-    prompt = f"Context:\n\n" f"{context}\n" f"Question:\n" f"{question}\n\n" f"Answer:"
-
+    prompt = f"Context:\n\n{context}\nQuestion:\n{question}\n\nAnswer:"
     return prompt
 
 

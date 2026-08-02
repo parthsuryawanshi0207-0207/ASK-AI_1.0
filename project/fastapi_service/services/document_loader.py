@@ -4,6 +4,7 @@ import fitz  # PyMuPDF — used only to detect scanned pages
 from docx import Document
 from pypdf import PdfReader
 from services.ocr import ocr_image, ocr_pdf
+from services.xlsx import extract_excel_text, extract_csv_text
 
 SUPPORTED_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".tiff", ".bmp"}
 
@@ -79,5 +80,11 @@ def load_document(file_path: str) -> str:
 
     if ext == ".txt":
         return load_txt(file_path)
+
+    if ext in {".xlsx", ".xls"}:
+        return extract_excel_text(file_path)
+
+    if ext == ".csv":
+        return extract_csv_text(file_path)
 
     raise ValueError(f"Unsupported file type: {ext}")

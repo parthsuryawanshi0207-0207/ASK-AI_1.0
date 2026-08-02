@@ -5,10 +5,13 @@ CACHE_PATH = os.getenv("OCR_CACHE_PATH", "ocr_cache.json")
 
 
 def _load() -> dict:
-    if not os.path.exists(CACHE_PATH):
+    if not os.path.exists(CACHE_PATH) or os.path.getsize(CACHE_PATH) == 0:
         return {}
-    with open(CACHE_PATH) as f:
-        return json.load(f)
+    try:
+        with open(CACHE_PATH) as f:
+            return json.load(f)
+    except json.JSONDecodeError:
+        return {}
 
 
 def _save(cache: dict) -> None:
