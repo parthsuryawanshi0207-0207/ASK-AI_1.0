@@ -11,7 +11,7 @@ router = APIRouter(prefix="/query", tags=["query"])
 @router.post("/ask", response_model=QueryResponse)
 async def ask_question(request: QueryRequest):
     domain = request.user_email.split("@")[-1]
-    user_tag = resolve_user_tag(domain)
+    user_tag = resolve_user_tag(domain, email=request.user_email)
 
     query_embedding = embed_query(request.question)
     results = query_similar(query_embedding, user_tag=user_tag, top_k=10)

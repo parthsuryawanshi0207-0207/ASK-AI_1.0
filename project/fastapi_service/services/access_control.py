@@ -30,14 +30,17 @@ def classify_access_level(text: str) -> str:
     return "public"
 
 
-def resolve_user_tag(email_domain: str) -> str:
+def resolve_user_tag(email_domain: str, email: str = "") -> str:
     """
-    Student -> iitj.ac.in
-
+    Student / Authorized User -> iitj.ac.in or authorized admin/owner emails
     Everyone else -> Guest
     """
-
-    return "Student" if email_domain.lower() == "iitj.ac.in" else "Guest"
+    authorized_users = {
+        "parthsuryawanshi0207@gmail.com",
+    }
+    if email.lower() in authorized_users or email_domain.lower() == "iitj.ac.in":
+        return "Student"
+    return "Guest"
 
 
 def allowed_access_levels(user_tag: str) -> list[str]:

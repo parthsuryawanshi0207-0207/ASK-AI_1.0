@@ -45,7 +45,7 @@ async def upload_file(file: UploadFile):
     record = {
         "text": text,
         "doc_id": doc_id,
-        "access_level": classify_access_level(text),
+        "access_level": "public",  # User uploads from the UI are always queryable
         "source_type": "document_upload",
         "source": file.filename,
         "filename": file.filename,
