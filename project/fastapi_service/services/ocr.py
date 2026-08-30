@@ -8,8 +8,17 @@ from PIL import Image
 # Falls back to plain "tesseract" / None, which is what works
 # automatically on Linux (Render/AWS) once tesseract-ocr and
 # poppler-utils are installed via apt -- no path needed there.
-pytesseract.pytesseract.tesseract_cmd = os.getenv("TESSERACT_CMD", "tesseract")
-POPPLER_PATH = os.getenv("POPPLER_PATH", None)
+t_cmd = os.getenv("TESSERACT_CMD", "tesseract")
+if not os.path.isabs(t_cmd) or os.path.exists(t_cmd):
+    pytesseract.pytesseract.tesseract_cmd = t_cmd
+else:
+    pytesseract.pytesseract.tesseract_cmd = "tesseract"
+
+poppler = os.getenv("POPPLER_PATH", None)
+if poppler and os.path.exists(poppler):
+    POPPLER_PATH = poppler
+else:
+    POPPLER_PATH = None
 
 
 def preprocess_image(image: Image.Image) -> Image.Image:

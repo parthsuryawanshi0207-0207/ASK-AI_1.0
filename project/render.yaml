@@ -28,11 +28,11 @@ services:
 
   - type: web
     name: fastapi-service
-    runtime: python
+    env: docker
+    dockerfilePath: fastapi_service/Dockerfile
+    dockerContext: fastapi_service
     branch: madhav-dev
     plan: starter
-    buildCommand: "pip install -r fastapi_service/requirements.txt"
-    startCommand: "cd fastapi_service && uvicorn main:app --host 0.0.0.0 --port $PORT"
     envVars:
       - key: GROQ_API_KEY
         sync: false
