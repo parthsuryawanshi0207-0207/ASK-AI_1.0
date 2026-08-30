@@ -1,6 +1,6 @@
 databases:
   - name: ask-ai-postgres
-    plan: free
+    plan: starter
     databaseName: askai
     user: askai_user
 
@@ -8,8 +8,9 @@ services:
   - type: web
     name: django-backend
     runtime: python
-    plan: free
-    buildCommand: "pip install -r project/django_backend/requirements.txt && python project/django_backend/manage.py collectstatic --noinput && python project/django_backend/manage.py migrate"
+    branch: madhav-dev
+    plan: starter
+    buildCommand: "pip install -r project/django_backend/requirements.txt && python project/django_backend/manage.py migrate && python project/django_backend/manage.py collectstatic --noinput"
     startCommand: "cd project/django_backend && gunicorn core.wsgi:application --bind 0.0.0.0:$PORT"
     envVars:
       - key: DATABASE_URL
@@ -17,28 +18,57 @@ services:
           name: ask-ai-postgres
           property: connectionString
       - key: DJANGO_SECRET_KEY
-        sync: false
+        generateValue: true
       - key: PYTHON_VERSION
         value: 3.11.0
       - key: FASTAPI_SERVICE_URL
-        value: https://fastapi-service.onrender.com
+        sync: false
       - key: DEMO_MODE
         value: "false"
 
   - type: web
     name: fastapi-service
-    runtime: python
-    plan: free
-    buildCommand: "pip install -r project/fastapi_service/requirements.txt"
-    startCommand: "cd project/fastapi_service && uvicorn main:app --host 0.0.0.0 --port $PORT"
+    env: docker
+    dockerfilePath: project/fastapi_service/Dockerfile
+    dockerContext: project/fastapi_service
+    branch: madhav-dev
+    plan: starter
     envVars:
-      - key: OPENAI_API_KEY
+      - key: GROQ_API_KEY
         sync: false
+      - key: LLM_MODEL
+        value: "qwen/qwen3.8-27b"
+      - key: PINECONE_API_KEY
+        sync: false
+      - key: PINECONE_INDEX_NAME
+        value: "ask-ai"
       - key: DJANGO_INTERNAL_URL
-        value: https://django-backend.onrender.com
+        sync: false
       - key: VECTOR_DB_URL
         fromDatabase:
           name: ask-ai-postgres
           property: connectionString
       - key: PYTHON_VERSION
         value: 3.11.0
+
+  - type: worker
+    name: celery-worker
+    env: docker
+    dockerfilePath: project/fastapi_service/Dockerfile
+    dockerContext: project/fastapi_service
+    branch: madhav-dev
+    plan: starter
+    dockerCommand: "celery -A jobs.celery_app worker --loglevel=info --concurrency=2"
+    envVars:
+      - key: CELERY_BROKER_URL
+        sync: false
+      - key: CELERY_RESULT_BACKEND
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: PINECONE_API_KEY
+        sync: false
+      - key: PINECONE_INDEX_NAME
+        value: "ask-ai"
+      - key: PII_HASH_SALT
+        sync: false
