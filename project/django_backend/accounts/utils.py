@@ -17,10 +17,16 @@ def send_otp_email(user, otp):
         f"This code expires in {otp.OTP_VALIDITY_MINUTES} minutes.\n\n"
         f"If you didn't request this, you can safely ignore this email."
     )
-    send_mail(
-        subject,
-        message,
-        settings.DEFAULT_FROM_EMAIL,
-        [user.email],
-        fail_silently=False,
-    )
+    try:
+        send_mail(
+            subject,
+            message,
+            settings.DEFAULT_FROM_EMAIL,
+            [user.email],
+            fail_silently=True,
+        )
+    except Exception as e:
+        print(f"[OTP Warning] Failed to send email: {e}")
+    print(f"\n==========================================")
+    print(f"  [OTP CODE for {user.email}]: {otp.code}")
+    print(f"==========================================\n")

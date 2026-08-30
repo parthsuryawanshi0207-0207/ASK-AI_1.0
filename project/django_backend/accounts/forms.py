@@ -23,8 +23,9 @@ class RegistrationForm(forms.ModelForm):
 
     def clean_email(self):
         email = self.cleaned_data["email"].lower().strip()
-        if User.objects.filter(email=email).exists():
-            raise forms.ValidationError("An account with this email already exists.")
+        user = User.objects.filter(email=email).first()
+        if user and user.is_verified:
+            raise forms.ValidationError("An account with this email already exists and is verified. Please log in.")
         return email
 
     def clean(self):
@@ -82,8 +83,9 @@ class LoginForm(forms.Form):
             if user is None:
                 raise forms.ValidationError("Invalid email or password.")
             if not user.is_verified:
+                self.unverified_user = user
                 raise forms.ValidationError(
-                    "This account hasn't been verified yet. Please check your email for the OTP."
+                    "This account hasn't been verified yet. We have sent a verification code to your email."
                 )
             if not user.is_active:
                 raise forms.ValidationError("This account has been deactivated.")

@@ -23,6 +23,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "corsheaders",
     "anymail",
     "chat_history",
     "captcha",
@@ -30,6 +31,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",  # serves static files in production
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -39,6 +41,9 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
 
 ROOT_URLCONF = "core.urls"
 
@@ -85,11 +90,15 @@ LOGIN_URL = "accounts:login"
 LOGIN_REDIRECT_URL = "accounts:chatbot"
 LOGOUT_REDIRECT_URL = "accounts:login"
 
-# Email Config (Brevo API via django-anymail)
-EMAIL_BACKEND = "anymail.backends.sendinblue.EmailBackend"
-ANYMAIL = {
-    "SENDINBLUE_API_KEY": os.getenv("BREVO_API_KEY", ""),
-}
+# Email Config (Brevo API via django-anymail if API key is provided, else Console for dev)
+if os.getenv("BREVO_API_KEY"):
+    EMAIL_BACKEND = "anymail.backends.sendinblue.EmailBackend"
+    ANYMAIL = {
+        "SENDINBLUE_API_KEY": os.getenv("BREVO_API_KEY", ""),
+    }
+else:
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "krishjainb24bb1016@gmail.com")
 
 # Captcha Settings

@@ -10,7 +10,7 @@ services:
     runtime: python
     branch: madhav-dev
     plan: starter
-    buildCommand: "pip install -r django_backend/requirements.txt && python django_backend/manage.py collectstatic --noinput"
+    buildCommand: "pip install -r django_backend/requirements.txt && python django_backend/manage.py migrate && python django_backend/manage.py collectstatic --noinput"
     startCommand: "cd django_backend && gunicorn core.wsgi:application --bind 0.0.0.0:$PORT"
     envVars:
       - key: DATABASE_URL
@@ -18,11 +18,11 @@ services:
           name: ask-ai-postgres
           property: connectionString
       - key: DJANGO_SECRET_KEY
-        sync: false
+        generateValue: true
       - key: PYTHON_VERSION
         value: 3.11.0
       - key: FASTAPI_SERVICE_URL
-        value: https://fastapi-service.onrender.com
+        sync: false
       - key: DEMO_MODE
         value: "false"
 
@@ -34,10 +34,16 @@ services:
     buildCommand: "pip install -r fastapi_service/requirements.txt"
     startCommand: "cd fastapi_service && uvicorn main:app --host 0.0.0.0 --port $PORT"
     envVars:
-      - key: OPENAI_API_KEY
+      - key: GROQ_API_KEY
         sync: false
+      - key: LLM_MODEL
+        value: "qwen/qwen3.8-27b"
+      - key: PINECONE_API_KEY
+        sync: false
+      - key: PINECONE_INDEX_NAME
+        value: "ask-ai"
       - key: DJANGO_INTERNAL_URL
-        value: https://django-backend.onrender.com
+        sync: false
       - key: VECTOR_DB_URL
         fromDatabase:
           name: ask-ai-postgres

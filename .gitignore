@@ -1,0 +1,17 @@
+# Python & Environment
+.env
+*.env
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Databases & Cache
+*.sqlite3
+*.sqlite3.bak
+*.log
+
+# Uploads
+project/storage/uploads/*
+!project/storage/uploads/.gitkeep
+project/fastapi_service/tokens/
