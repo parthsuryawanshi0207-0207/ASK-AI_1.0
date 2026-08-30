@@ -1,6 +1,6 @@
 databases:
   - name: ask-ai-postgres
-    plan: starter
+    plan: free
     databaseName: askai
     user: askai_user
 
@@ -9,7 +9,7 @@ services:
     name: django-backend
     runtime: python
     branch: madhav-dev
-    plan: starter
+    plan: free
     buildCommand: "pip install -r project/django_backend/requirements.txt && python project/django_backend/manage.py migrate && python project/django_backend/manage.py collectstatic --noinput"
     startCommand: "cd project/django_backend && gunicorn core.wsgi:application --bind 0.0.0.0:$PORT"
     envVars:
@@ -32,7 +32,7 @@ services:
     dockerfilePath: project/fastapi_service/Dockerfile
     dockerContext: project/fastapi_service
     branch: madhav-dev
-    plan: starter
+    plan: free
     envVars:
       - key: GROQ_API_KEY
         sync: false
@@ -50,25 +50,3 @@ services:
           property: connectionString
       - key: PYTHON_VERSION
         value: 3.11.0
-
-  - type: worker
-    name: celery-worker
-    env: docker
-    dockerfilePath: project/fastapi_service/Dockerfile
-    dockerContext: project/fastapi_service
-    branch: madhav-dev
-    plan: starter
-    dockerCommand: "celery -A jobs.celery_app worker --loglevel=info --concurrency=2"
-    envVars:
-      - key: CELERY_BROKER_URL
-        sync: false
-      - key: CELERY_RESULT_BACKEND
-        sync: false
-      - key: GROQ_API_KEY
-        sync: false
-      - key: PINECONE_API_KEY
-        sync: false
-      - key: PINECONE_INDEX_NAME
-        value: "ask-ai"
-      - key: PII_HASH_SALT
-        sync: false
