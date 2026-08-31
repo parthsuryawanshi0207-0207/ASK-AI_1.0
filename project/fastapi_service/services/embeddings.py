@@ -14,7 +14,8 @@ def get_pinecone_client():
     if _pc is None:
         from pinecone import Pinecone
 
-        _pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY", "fake-key-for-ci"))
+        api_key = os.getenv("PINECONE_INFERENCE_API_KEY") or os.getenv("PINECONE_API_KEY", "fake-key-for-ci")
+        _pc = Pinecone(api_key=api_key)
     return _pc
 
 
