@@ -53,7 +53,10 @@ async def upload_file(file: UploadFile):
     }
     chunks = chunk_record(record)
 
-    # 7. Embed and upsert
+    # 7. Embed and upsert (enrich with document title/filename for accurate retrieval)
+    for c in chunks:
+        c["text"] = f"[Document: {file.filename}]\n{c['text']}"
+
     texts = [c["text"] for c in chunks]
     embeddings = embed_chunks(texts)
 
