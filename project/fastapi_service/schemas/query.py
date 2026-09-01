@@ -2,9 +2,15 @@ from typing import Optional
 from pydantic import BaseModel
 
 
+class ChatMessage(BaseModel):
+    role: str  # "user" or "assistant"
+    content: str
+
+
 class QueryRequest(BaseModel):
     question: str
     user_email: str
+    chat_history: Optional[list[ChatMessage]] = []
 
 
 class SourceChunk(BaseModel):

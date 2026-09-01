@@ -2,7 +2,7 @@ from fastapi import APIRouter
 from schemas.query import QueryRequest, QueryResponse, SourceChunk
 from services.access_control import resolve_user_tag
 from services.embeddings import embed_query
-from services.rag import generate_answer
+from services.rag import condense_query, generate_answer
 from services.vectorstore import query_similar
 
 router = APIRouter(prefix="/query", tags=["query"])
@@ -13,7 +13,9 @@ async def ask_question(request: QueryRequest):
     domain = request.user_email.split("@")[-1]
     user_tag = resolve_user_tag(domain, email=request.user_email)
 
-    query_embedding = embed_query(request.question)
+    # Rewrite ambiguous follow-up questions using active chat history
+    search_query = condense_query(request.question, request.chat_history)
+    query_embedding = embed_query(search_query)
     results = query_similar(query_embedding, user_tag=user_tag, top_k=10)
 
     matches = results["matches"]
@@ -31,7 +33,7 @@ async def ask_question(request: QueryRequest):
         for match in matches
     ]
 
-    answer = generate_answer(request.question, context_chunks)
+    answer = generate_answer(request.question, context_chunks, chat_history=request.chat_history)
 
     sources = [
         SourceChunk(
